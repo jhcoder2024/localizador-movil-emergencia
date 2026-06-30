@@ -13,4 +13,14 @@ class SmsRepositoryImpl implements SmsRepository {
       return false;
     }
   }
+
+  @override
+  Future<bool> estaDisponible() async {
+    try {
+      return await canSendSMS();
+    } catch (e) {
+      debugPrint('[SmsRepository] Error verificando disponibilidad: $e');
+      return false;
+    }
+  }
 }

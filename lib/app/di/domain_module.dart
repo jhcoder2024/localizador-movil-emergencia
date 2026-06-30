@@ -47,6 +47,7 @@ void initDomainModule() {
   );
   getIt.registerLazySingleton<VerificarDisponibilidadCanalUseCase>(
     () => VerificarDisponibilidadCanalUseCase(
+      getIt<SmsRepository>(),
       getIt<WhatsappRepository>(),
       getIt<TelegramRepository>(),
       getIt<ConfigRepository>(),
