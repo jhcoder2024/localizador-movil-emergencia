@@ -1,0 +1,81 @@
+import 'package:flutter/material.dart';
+import 'package:localizador_movil_emergencia/app/di/data_module.dart';
+import 'package:localizador_movil_emergencia/app/di/domain_module.dart';
+import 'package:localizador_movil_emergencia/app/di/presentation_module.dart';
+import 'package:localizador_movil_emergencia/presentation/screens/main_screen.dart';
+import 'package:localizador_movil_emergencia/presentation/screens/config_screen.dart';
+import 'package:localizador_movil_emergencia/presentation/screens/permissions_screen.dart';
+import 'package:localizador_movil_emergencia/presentation/screens/splash_screen.dart';
+import 'package:localizador_movil_emergencia/core/theme/app_theme.dart';
+import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
+  await initDataModule();
+  initDomainModule();
+  initPresentationModule();
+  runApp(const LocalizadorEmergenciaApp());
+}
+
+class LocalizadorEmergenciaApp extends StatelessWidget {
+  const LocalizadorEmergenciaApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final router = GoRouter(
+      initialLocation: '/splash',
+      routes: [
+        GoRoute(
+          path: '/splash',
+          builder: (context, state) => const SplashScreen(),
+        ),
+        GoRoute(
+          path: '/',
+          pageBuilder: (context, state) => CustomTransitionPage(
+            key: state.pageKey,
+            child: const MainScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+          ),
+        ),
+        GoRoute(
+          path: '/config',
+          pageBuilder: (context, state) => CustomTransitionPage(
+            key: state.pageKey,
+            child: const ConfigScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(1, 0),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                ),
+          ),
+        ),
+        GoRoute(
+          path: '/permissions',
+          pageBuilder: (context, state) => CustomTransitionPage(
+            key: state.pageKey,
+            child: const PermissionsScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+          ),
+        ),
+      ],
+    );
+
+    return MultiProvider(
+      providers: providers,
+      child: MaterialApp.router(
+        title: 'Localizador Móvil de Emergencia',
+        theme: AppTheme.lightTheme,
+        routerConfig: router,
+        debugShowCheckedModeBanner: false,
+      ),
+    );
+  }
+}
