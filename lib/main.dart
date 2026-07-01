@@ -7,6 +7,7 @@ import 'package:localizador_movil_emergencia/presentation/screens/config_screen.
 import 'package:localizador_movil_emergencia/presentation/screens/permissions_screen.dart';
 import 'package:localizador_movil_emergencia/presentation/screens/splash_screen.dart';
 import 'package:localizador_movil_emergencia/core/theme/app_theme.dart';
+import 'package:localizador_movil_emergencia/presentation/services/notification_service.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -17,6 +18,7 @@ void main() async {
   await initDataModule();
   initDomainModule();
   initPresentationModule();
+  await NotificationService.initialize();
   runApp(const LocalizadorEmergenciaApp());
 }
 

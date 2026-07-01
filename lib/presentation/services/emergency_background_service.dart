@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:get_it/get_it.dart';
 import 'package:localizador_movil_emergencia/domain/entities/tipo_emergencia.dart';
@@ -8,10 +7,61 @@ import 'package:localizador_movil_emergencia/domain/repositories/emergency_repos
 import 'package:localizador_movil_emergencia/domain/repositories/config_repository.dart';
 import 'package:localizador_movil_emergencia/presentation/services/localizador_sonido_service.dart';
 
-class EmergencyBackgroundService with WidgetsBindingObserver {
-  static Timer? _timer;
-  static bool _activo = false;
+Timer? _backgroundTimer;
+bool _backgroundActivo = false;
 
+@pragma('vm:entry-point')
+void onStart(ServiceInstance service) {
+  final locator = GetIt.instance;
+  final enviarUbicacion = locator<EnviarUbicacionUseCase>();
+  final emergencyRepo = locator<EmergencyRepository>();
+  final configRepo = locator<ConfigRepository>();
+
+  service.on('start').listen((event) async {
+    if (_backgroundActivo) return;
+    _backgroundActivo = true;
+
+    LocalizadorSonidoService.iniciar();
+
+    final tipoIndex = event!['tipoEmergencia'] as int;
+    final tipo = TipoEmergencia.values[tipoIndex];
+
+    _backgroundTimer?.cancel();
+
+    final config = await configRepo.obtenerConfiguracion().first;
+    final intervalo = Duration(minutes: config.intervaloMinutos);
+
+    // Envío inicial inmediato
+    await enviarUbicacion.call(tipo);
+
+    // Envíos periódicos
+    _backgroundTimer = Timer.periodic(intervalo, (_) async {
+      final estado = await emergencyRepo.obtenerEstado().first;
+      if (estado.activa && estado.tipo != null) {
+        await enviarUbicacion.call(estado.tipo!);
+      }
+    });
+  });
+
+  service.on('stop').listen((event) {
+    _detenerRecursosBackground();
+    service.stopSelf();
+  });
+}
+
+void _detenerRecursosBackground() {
+  _backgroundTimer?.cancel();
+  _backgroundTimer = null;
+  _backgroundActivo = false;
+  LocalizadorSonidoService.detener();
+}
+
+@pragma('vm:entry-point')
+bool onIosBackground(ServiceInstance service) {
+  return true;
+}
+
+class EmergencyBackgroundService {
   static Future<void> initialize() async {
     final service = FlutterBackgroundService();
     await service.configure(
@@ -32,58 +82,6 @@ class EmergencyBackgroundService with WidgetsBindingObserver {
     );
   }
 
-  @pragma('vm:entry-point')
-  static void onStart(ServiceInstance service) {
-    final locator = GetIt.instance;
-    final enviarUbicacion = locator<EnviarUbicacionUseCase>();
-    final emergencyRepo = locator<EmergencyRepository>();
-    final configRepo = locator<ConfigRepository>();
-
-    service.on('start').listen((event) async {
-      if (_activo) return;
-      _activo = true;
-
-      LocalizadorSonidoService.iniciar();
-
-      final tipoIndex = event!['tipoEmergencia'] as int;
-      final tipo = TipoEmergencia.values[tipoIndex];
-
-      _timer?.cancel();
-
-      final config = await configRepo.obtenerConfiguracion().first;
-      final intervalo = Duration(minutes: config.intervaloMinutos);
-
-      // Envío inicial inmediato
-      await enviarUbicacion.call(tipo);
-
-      // Envíos periódicos con Timer (no Stream.periodic, más eficiente)
-      _timer = Timer.periodic(intervalo, (_) async {
-        final estado = await emergencyRepo.obtenerEstado().first;
-        if (estado.activa && estado.tipo != null) {
-          await enviarUbicacion.call(estado.tipo!);
-        }
-      });
-    });
-
-    service.on('stop').listen((event) {
-      _detenerRecursos();
-      service.stopSelf();
-    });
-  }
-
-  static void _detenerRecursos() {
-    _timer?.cancel();
-    _timer = null;
-    _activo = false;
-    LocalizadorSonidoService.detener();
-    // GPS y wakelock se liberan automáticamente al detener el foreground service
-  }
-
-  @pragma('vm:entry-point')
-  static bool onIosBackground(ServiceInstance service) {
-    return true;
-  }
-
   static Future<void> start({required int tipoEmergencia}) async {
     final service = FlutterBackgroundService();
     await service.startService();
@@ -91,7 +89,7 @@ class EmergencyBackgroundService with WidgetsBindingObserver {
   }
 
   static Future<void> stop() async {
-    _detenerRecursos();
+    _detenerRecursosBackground();
     final service = FlutterBackgroundService();
     service.invoke('stop');
   }

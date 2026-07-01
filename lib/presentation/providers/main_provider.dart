@@ -10,6 +10,7 @@ import 'package:localizador_movil_emergencia/domain/usecases/cancelar_emergencia
 import 'package:localizador_movil_emergencia/domain/usecases/enviar_ubicacion_usecase.dart';
 import 'package:localizador_movil_emergencia/domain/usecases/obtener_configuracion_usecase.dart';
 import 'package:localizador_movil_emergencia/presentation/services/localizador_sonido_service.dart';
+import 'package:localizador_movil_emergencia/presentation/services/notification_service.dart';
 
 class MainProvider extends ChangeNotifier {
   final ActivarEmergenciaUseCase _activarEmergencia;
@@ -17,6 +18,8 @@ class MainProvider extends ChangeNotifier {
   final EnviarUbicacionUseCase _enviarUbicacion;
   final ObtenerConfiguracionUseCase _obtenerConfiguracion;
   final EmergencyRepository _emergencyRepository;
+
+  Timer? _envioPeriodicoTimer;
 
   MainProvider({
     required ActivarEmergenciaUseCase activarEmergencia,
@@ -98,7 +101,23 @@ class MainProvider extends ChangeNotifier {
     try {
       await _activarEmergencia.call(_tipoPendiente!);
       LocalizadorSonidoService.iniciar();
+
+      // Mostrar notificación permanente
+      try {
+        await NotificationService.showEmergencyNotification(
+          tipo: _tipoPendiente!,
+          tiempoTranscurrido: '0h 0m',
+        );
+      } catch (e) {
+        debugPrint('[MainProvider] Error al mostrar notificación: $e');
+      }
+
+      // Envío inicial inmediato
       await _enviarUbicacion.call(_tipoPendiente!);
+
+      // Iniciar envíos periódicos
+      _iniciarEnviosPeriodicos(_tipoPendiente!);
+
       _error = null;
     } catch (e) {
       _error = 'Error al activar emergencia: $e';
@@ -110,10 +129,36 @@ class MainProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _iniciarEnviosPeriodicos(TipoEmergencia tipo) {
+    _envioPeriodicoTimer?.cancel();
+    final intervalo = Duration(minutes: _configuracion.intervaloMinutos);
+    debugPrint('[MainProvider] Envíos periódicos cada ${_configuracion.intervaloMinutos} minuto(s)');
+
+    _envioPeriodicoTimer = Timer.periodic(intervalo, (_) async {
+      final estado = await _emergencyRepository.obtenerEstado().first;
+      if (estado.activa && estado.tipo != null) {
+        debugPrint('[MainProvider] Enviando ubicación periódica...');
+        await _enviarUbicacion.call(estado.tipo!);
+      } else {
+        debugPrint('[MainProvider] Emergencia ya no activa, deteniendo envíos periódicos');
+        _envioPeriodicoTimer?.cancel();
+      }
+    });
+  }
+
   Future<void> cancelarEmergenciaActual() async {
     try {
+      _envioPeriodicoTimer?.cancel();
+      _envioPeriodicoTimer = null;
+
       await _cancelarEmergencia.call();
       LocalizadorSonidoService.detener();
+
+      try {
+        await NotificationService.cancelNotification();
+      } catch (e) {
+        debugPrint('[MainProvider] Error al cancelar notificación: $e');
+      }
     } catch (e) {
       _error = 'Error al cancelar emergencia: $e';
       notifyListeners();
@@ -127,6 +172,7 @@ class MainProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _envioPeriodicoTimer?.cancel();
     _estadoSub?.cancel();
     _configSub?.cancel();
     super.dispose();

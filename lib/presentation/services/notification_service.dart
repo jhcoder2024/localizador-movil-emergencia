@@ -13,7 +13,8 @@ class NotificationService {
       const InitializationSettings(android: androidSettings, iOS: iosSettings),
     );
 
-    const androidChannel = AndroidNotificationChannel(
+    // Canal para notificaciones del localizador activo
+    const localizadorChannel = AndroidNotificationChannel(
       'localizador_channel',
       'Localizador',
       description: 'Notificaciones del localizador activo',
@@ -24,7 +25,22 @@ class NotificationService {
     await _plugin
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(androidChannel);
+        ?.createNotificationChannel(localizadorChannel);
+
+    // Canal para el foreground service (emergency_channel)
+    // Este canal es usado por flutter_background_service para la notificación permanente
+    const emergencyChannel = AndroidNotificationChannel(
+      'emergency_channel',
+      'Emergencia',
+      description: 'Notificación permanente del servicio de emergencia',
+      importance: Importance.low,
+      playSound: false,
+      enableVibration: false,
+    );
+    await _plugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(emergencyChannel);
   }
 
   static Future<void> showEmergencyNotification({

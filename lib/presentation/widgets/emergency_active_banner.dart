@@ -1,7 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:localizador_movil_emergencia/domain/entities/estado_emergencia.dart';
 
-class EmergencyActiveBanner extends StatelessWidget {
+class EmergencyActiveBanner extends StatefulWidget {
   final EstadoEmergencia estado;
   final VoidCallback onCancel;
 
@@ -11,9 +12,30 @@ class EmergencyActiveBanner extends StatelessWidget {
     required this.onCancel,
   });
 
+  @override
+  State<EmergencyActiveBanner> createState() => _EmergencyActiveBannerState();
+}
+
+class _EmergencyActiveBannerState extends State<EmergencyActiveBanner> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
   String _formatDuration() {
-    if (estado.inicioTimestamp == null) return '';
-    final diff = DateTime.now().difference(estado.inicioTimestamp!);
+    if (widget.estado.inicioTimestamp == null) return '';
+    final diff = DateTime.now().difference(widget.estado.inicioTimestamp!);
     final hours = diff.inHours;
     final minutes = diff.inMinutes.remainder(60);
     return '${hours}h ${minutes}m';
@@ -42,7 +64,7 @@ class EmergencyActiveBanner extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${estado.tipo?.displayName ?? ''} - ${_formatDuration()}',
+                  '${widget.estado.tipo?.displayName ?? ''} - ${_formatDuration()}',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.9),
                     fontSize: 13,
@@ -52,7 +74,7 @@ class EmergencyActiveBanner extends StatelessWidget {
             ),
           ),
           TextButton(
-            onPressed: onCancel,
+            onPressed: widget.onCancel,
             style: TextButton.styleFrom(
               foregroundColor: Colors.white,
               side: const BorderSide(color: Colors.white),
