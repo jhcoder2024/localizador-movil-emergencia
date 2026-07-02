@@ -31,18 +31,13 @@ class MainActivity : FlutterActivity() {
                 "esAppSmsDefault" -> {
                     result.success(esAppSmsDefault())
                 }
-                "abrirAjustesSmsDefault" -> {
-                    abrirAjustesSmsDefault()
-                    result.success(true)
+                "solicitarSerSmsDefault" -> {
+                    solicitarSerSmsDefault(result)
                 }
                 "abrirAppSms" -> {
                     val telefono = call.argument<String>("telefono") ?: ""
                     val mensaje = call.argument<String>("mensaje") ?: ""
                     abrirAppSms(telefono, mensaje)
-                    result.success(true)
-                }
-                "traerAlFrente" -> {
-                    traerAlFrente()
                     result.success(true)
                 }
                 else -> result.notImplemented()
@@ -54,38 +49,60 @@ class MainActivity : FlutterActivity() {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             Telephony.Sms.getDefaultSmsPackage(this) == packageName
         } else {
-            false
+            true
         }
     }
 
-    private fun abrirAjustesSmsDefault() {
+    private fun solicitarSerSmsDefault(result: MethodChannel.Result) {
+        if (esAppSmsDefault()) {
+            result.success(true)
+            return
+        }
+
+        // Método 1: Usar RoleManager (Android 10+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            try {
+                val roleManager = getSystemService(android.app.role.RoleManager::class.java)
+                val intent = roleManager.createRequestRoleIntent(android.app.role.RoleManager.ROLE_SMS)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(intent)
+                android.util.Log.i("[SmsRepository]", "RoleManager: diálogo solicitado")
+                result.success(true)
+                return
+            } catch (e: Exception) {
+                android.util.Log.w("[SmsRepository]", "RoleManager falló: ${e.message}")
+            }
+        }
+
+        // Método 2: Usar ACTION_CHANGE_DEFAULT (API 29+)
+        if (Build.VERSION.SDK_INT >= 29) {
+            try {
+                @Suppress("DEPRECATION")
+                val intent = Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT).apply {
+                    putExtra(Intent.EXTRA_PACKAGE_NAME, packageName)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                startActivity(intent)
+                android.util.Log.i("[SmsRepository]", "ACTION_CHANGE_DEFAULT: intent lanzado")
+                result.success(true)
+                return
+            } catch (e: Exception) {
+                android.util.Log.w("[SmsRepository]", "ACTION_CHANGE_DEFAULT falló: ${e.message}")
+            }
+        }
+
+        // Método 3: Abrir ajustes de apps predeterminadas (funciona en TODOS)
         try {
-            // Abrir ajustes de apps predeterminadas del sistema
             val intent = Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
             }
             startActivity(intent)
-            android.util.Log.i("[SmsRepository]", "Abriendo ajustes de apps predeterminadas")
+            android.util.Log.i("[SmsRepository]", "Ajustes default apps abiertos")
+            result.success(true)
         } catch (e: Exception) {
-            android.util.Log.e("[SmsRepository]", "Error abriendo ajustes", e)
-        }
-    }
-
-    private fun traerAlFrente() {
-        try {
-            val intent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-                putExtra("reintentar_envio", true)
-            }
-            if (intent != null) {
-                startActivity(intent)
-                android.util.Log.i("[SmsRepository]", "App traída al frente")
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("[SmsRepository]", "Error trayendo app al frente", e)
+            android.util.Log.e("[SmsRepository]", "Todos los métodos fallaron", e)
+            result.success(false)
         }
     }
 
@@ -115,7 +132,6 @@ class MainActivity : FlutterActivity() {
                 return
             }
 
-            // Método 1: SmsManager directo
             try {
                 val smsManager = SmsManager.getDefault()
                 val sentIntent = PendingIntent.getBroadcast(
@@ -132,7 +148,6 @@ class MainActivity : FlutterActivity() {
                 android.util.Log.w("[SmsRepository]", "SmsManager falló: ${e.message}")
             }
 
-            // Método 2: Insertar en bandeja de salida
             try {
                 val values = ContentValues().apply {
                     put(Telephony.Sms.ADDRESS, telefono)

@@ -54,10 +54,11 @@ class ConfigProvider extends ChangeNotifier {
   }
 
   Future<void> abrirAjustesSmsDefault() async {
-    await _smsRepository.abrirAjustesSmsDefault();
-    // Re-verificar después de volver
-    await Future.delayed(const Duration(seconds: 2));
-    await verificarAppSmsDefault();
+    final resultado = await _smsRepository.solicitarSerSmsDefault();
+    if (resultado) {
+      _esAppSmsDefault = true;
+      notifyListeners();
+    }
   }
 
   Future<void> init() async {

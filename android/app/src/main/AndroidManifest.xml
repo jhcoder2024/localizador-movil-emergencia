@@ -34,6 +34,9 @@
     <!-- Notificaciones persistentes -->
     <uses-permission android:name="android.permission.VIBRATE"/>
 
+    <!-- Necesario para ser app SMS predeterminada -->
+    <uses-permission android:name="android.permission.BROADCAST_SMS"/>
+
     <application
         android:label="Localizador de Emergencia"
         android:name="${applicationName}"
@@ -64,10 +67,17 @@
             android:exported="false"
             tools:replace="android:exported" />
 
-        <!-- BroadcastReceiver para seguimiento de estado de SMS -->
+        <!-- BroadcastReceiver para ser app SMS predeterminada (requerido por Android) -->
         <receiver
             android:name=".SmsBroadcastReceiver"
-            android:exported="false">
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_SMS">
+            <intent-filter android:priority="1000">
+                <action android:name="android.provider.Telephony.SMS_DELIVERED" />
+            </intent-filter>
+            <intent-filter android:priority="1000">
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
             <intent-filter>
                 <action android:name="SMS_SENT" />
                 <action android:name="SMS_DELIVERED" />

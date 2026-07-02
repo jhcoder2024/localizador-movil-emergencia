@@ -20,23 +20,33 @@ class SmsRepositoryImpl implements SmsRepository {
       final telefonoNormalizado = _normalizarTelefono(telefono);
       debugPrint('[SmsRepository] Enviando SMS a $telefono (normalizado: $telefonoNormalizado)');
 
-      // Método principal: abrir app de SMS nativa con mensaje pre-llenado
-      // Esto funciona en TODOS los dispositivos Android sin restricciones
-      debugPrint('[SmsRepository] Abriendo app de SMS...');
+      // 1. Intentar envío directo (SmsManager)
+      try {
+        final result = await _channel.invokeMethod<bool>('sendSms', {
+          'telefono': telefonoNormalizado,
+          'mensaje': mensaje,
+        });
+        if (result == true) {
+          debugPrint('[SmsRepository] SMS enviado directamente');
+          return true;
+        }
+      } catch (e) {
+        debugPrint('[SmsRepository] Envío directo falló: $e');
+      }
+
+      // 2. Verificar si somos app SMS default
+      final esDefault = await esAppSmsDefault();
+      if (!esDefault) {
+        debugPrint('[SmsRepository] No somos app SMS default. Solicitando...');
+        // Mostrar diálogo de confirmación en la UI mejor aquí
+      }
+
+      // 3. Fallback: abrir app de SMS
+      debugPrint('[SmsRepository] Abriendo app de SMS como fallback...');
       await _channel.invokeMethod('abrirAppSms', {
         'telefono': telefonoNormalizado,
         'mensaje': mensaje,
       });
-      debugPrint('[SmsRepository] App de SMS abierta correctamente');
-
-      // También intentar envío directo por si acaso (no bloquea)
-      try {
-        await _channel.invokeMethod<bool>('sendSms', {
-          'telefono': telefonoNormalizado,
-          'mensaje': mensaje,
-        });
-      } catch (_) {}
-
       return true;
     } catch (e) {
       debugPrint('[SmsRepository] Error: $e');
@@ -60,11 +70,13 @@ class SmsRepositoryImpl implements SmsRepository {
   }
 
   @override
-  Future<void> abrirAjustesSmsDefault() async {
+  Future<bool> solicitarSerSmsDefault() async {
     try {
-      await _channel.invokeMethod('abrirAjustesSmsDefault');
+      final result = await _channel.invokeMethod<bool>('solicitarSerSmsDefault');
+      return result ?? false;
     } catch (e) {
-      debugPrint('[SmsRepository] Error al abrir ajustes: $e');
+      debugPrint('[SmsRepository] Error solicitando ser default: $e');
+      return false;
     }
   }
 }
