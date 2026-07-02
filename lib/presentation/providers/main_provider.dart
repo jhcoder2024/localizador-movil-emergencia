@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:localizador_movil_emergencia/core/utils/permission_utils.dart';
 import 'package:localizador_movil_emergencia/domain/entities/configuracion.dart';
 import 'package:localizador_movil_emergencia/domain/entities/estado_emergencia.dart';
@@ -9,10 +10,13 @@ import 'package:localizador_movil_emergencia/domain/usecases/activar_emergencia_
 import 'package:localizador_movil_emergencia/domain/usecases/cancelar_emergencia_usecase.dart';
 import 'package:localizador_movil_emergencia/domain/usecases/enviar_ubicacion_usecase.dart';
 import 'package:localizador_movil_emergencia/domain/usecases/obtener_configuracion_usecase.dart';
+import 'package:localizador_movil_emergencia/presentation/services/emergency_background_service.dart';
 import 'package:localizador_movil_emergencia/presentation/services/localizador_sonido_service.dart';
 import 'package:localizador_movil_emergencia/presentation/services/notification_service.dart';
 
 class MainProvider extends ChangeNotifier {
+  static const _channel = MethodChannel('com.example.localizador_movil_emergencia/sms');
+
   final ActivarEmergenciaUseCase _activarEmergencia;
   final CancelarEmergenciaUseCase _cancelarEmergencia;
   final EnviarUbicacionUseCase _enviarUbicacion;
@@ -102,6 +106,21 @@ class MainProvider extends ChangeNotifier {
       await _activarEmergencia.call(_tipoPendiente!);
       LocalizadorSonidoService.iniciar();
 
+      // Iniciar foreground service para mantener la app en segundo plano
+      try {
+        await EmergencyBackgroundService.start();
+      } catch (e) {
+        debugPrint('[MainProvider] Error al iniciar foreground service: $e');
+      }
+
+      // Configurar callbacks de la notificación
+      NotificationService.onCancelEmergencia = () {
+        cancelarEmergenciaActual();
+      };
+      NotificationService.onNotificationTapped = () {
+        reintentarEnvio();
+      };
+
       // Mostrar notificación permanente
       try {
         await NotificationService.showEmergencyNotification(
@@ -138,7 +157,18 @@ class MainProvider extends ChangeNotifier {
       final estado = await _emergencyRepository.obtenerEstado().first;
       if (estado.activa && estado.tipo != null) {
         debugPrint('[MainProvider] Enviando ubicación periódica...');
+
+        // Intentar envío directo (por si la app ya es predeterminada)
         await _enviarUbicacion.call(estado.tipo!);
+
+        // Actualizar notificación para que el usuario sepa que debe re-enviar
+        final diff = DateTime.now().difference(estado.inicioTimestamp!);
+        final tiempo = '${diff.inHours}h ${diff.inMinutes.remainder(60)}m';
+        try {
+          await NotificationService.updateNotificationTime(tiempo);
+        } catch (e) {
+          debugPrint('[MainProvider] Error actualizando notificación: $e');
+        }
       } else {
         debugPrint('[MainProvider] Emergencia ya no activa, deteniendo envíos periódicos');
         _envioPeriodicoTimer?.cancel();
@@ -146,12 +176,28 @@ class MainProvider extends ChangeNotifier {
     });
   }
 
+  /// Reintenta el envío de SMS manualmente.
+  /// Se llama cuando el usuario vuelve a la app y hay una emergencia activa.
+  Future<void> reintentarEnvio() async {
+    if (!_estado.activa || _estado.tipo == null) return;
+    debugPrint('[MainProvider] Reintentando envío de SMS...');
+    await _enviarUbicacion.call(_estado.tipo!);
+  }
+
+  /// Obtiene el intervalo actual de envíos en minutos
+  int get intervaloMinutos => _configuracion.intervaloMinutos;
+
   Future<void> cancelarEmergenciaActual() async {
     try {
       _envioPeriodicoTimer?.cancel();
       _envioPeriodicoTimer = null;
 
       await _cancelarEmergencia.call();
+      try {
+        await EmergencyBackgroundService.stop();
+      } catch (e) {
+        debugPrint('[MainProvider] Error al detener foreground service: $e');
+      }
       LocalizadorSonidoService.detener();
 
       try {

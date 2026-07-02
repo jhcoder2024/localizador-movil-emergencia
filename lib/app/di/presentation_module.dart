@@ -22,6 +22,7 @@ void initPresentationModule() {
       obtenerConfiguracion: getIt(),
       verificarCanales: getIt(),
       contactoRepository: getIt(),
+      smsRepository: getIt(),
     ),
   );
 }

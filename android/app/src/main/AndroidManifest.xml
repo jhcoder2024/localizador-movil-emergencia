@@ -4,10 +4,11 @@
     <!-- Red -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
-    <!-- SMS (telephony: envío automático) -->
+    <!-- SMS (envío automático) -->
     <uses-permission android:name="android.permission.SEND_SMS"/>
     <uses-permission android:name="android.permission.RECEIVE_SMS"/>
     <uses-permission android:name="android.permission.READ_SMS"/>
+    <uses-permission android:name="android.permission.WRITE_SMS"/>
 
     <!-- Ubicación (geolocator) -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>

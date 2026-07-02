@@ -7,21 +7,16 @@ import 'package:localizador_movil_emergencia/data/datasources/local/config_dao.d
 import 'package:localizador_movil_emergencia/data/datasources/local/contacts_dao.dart';
 import 'package:localizador_movil_emergencia/data/datasources/local/shared_prefs_datasource.dart';
 import 'package:localizador_movil_emergencia/data/datasources/local/secure_storage_datasource.dart';
-import 'package:localizador_movil_emergencia/data/datasources/remote/telegram_remote_datasource.dart';
 import 'package:localizador_movil_emergencia/data/repositories/contacto_repository_impl.dart';
 import 'package:localizador_movil_emergencia/data/repositories/config_repository_impl.dart';
 import 'package:localizador_movil_emergencia/data/repositories/emergency_repository_impl.dart';
 import 'package:localizador_movil_emergencia/data/repositories/location_repository_impl.dart';
 import 'package:localizador_movil_emergencia/data/repositories/sms_repository_impl.dart';
-import 'package:localizador_movil_emergencia/data/repositories/telegram_repository_impl.dart';
-import 'package:localizador_movil_emergencia/data/repositories/whatsapp_repository_impl.dart';
 import 'package:localizador_movil_emergencia/domain/repositories/contacto_repository.dart';
 import 'package:localizador_movil_emergencia/domain/repositories/config_repository.dart';
 import 'package:localizador_movil_emergencia/domain/repositories/emergency_repository.dart';
 import 'package:localizador_movil_emergencia/domain/repositories/location_repository.dart';
 import 'package:localizador_movil_emergencia/domain/repositories/sms_repository.dart';
-import 'package:localizador_movil_emergencia/domain/repositories/telegram_repository.dart';
-import 'package:localizador_movil_emergencia/domain/repositories/whatsapp_repository.dart';
 
 final getIt = GetIt.instance;
 
@@ -52,11 +47,6 @@ Future<void> initDataModule() async {
   getIt.registerLazySingleton<ConfigDao>(() => ConfigDao(database));
   getIt.registerLazySingleton<ContactsDao>(() => ContactsDao(database));
 
-  // Remote datasources
-  getIt.registerLazySingleton<TelegramRemoteDataSource>(
-    () => TelegramRemoteDataSource(dio),
-  );
-
   // Repositories
   getIt.registerLazySingleton<ContactoRepository>(
     () => ContactoRepositoryImpl(getIt<ContactsDao>()),
@@ -73,12 +63,6 @@ Future<void> initDataModule() async {
   );
   getIt.registerLazySingleton<SmsRepository>(
     () => SmsRepositoryImpl(),
-  );
-  getIt.registerLazySingleton<TelegramRepository>(
-    () => TelegramRepositoryImpl(getIt<TelegramRemoteDataSource>()),
-  );
-  getIt.registerLazySingleton<WhatsappRepository>(
-    () => WhatsappRepositoryImpl(),
   );
   getIt.registerLazySingleton<EmergencyRepository>(
     () => EmergencyRepositoryImpl(),

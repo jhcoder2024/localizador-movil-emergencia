@@ -3,48 +3,82 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+/// Configuración de audio para Android.
+/// Usa el canal de música con altavoz y foco transitorio
+/// para máxima compatibilidad y volumen.
+final _audioContext = AudioContext(
+  android: AudioContextAndroid(
+    isSpeakerphoneOn: true,
+    stayAwake: false,
+    contentType: AndroidContentType.music,
+    usageType: AndroidUsageType.media,
+    audioFocus: AndroidAudioFocus.gainTransient,
+  ),
+);
+
 class LocalizadorSonidoService {
   static AudioPlayer? _player;
-  static Timer? _timer;
+  static Timer? _pitidoTimer;
+  static Timer? _duracionTimer;
   static bool _sonando = false;
   static bool _usarFallback = false;
   static bool _assetVerificado = false;
 
-  static const int _intervaloPitidoSegundos = 10;
+  static const int _intervaloPitidoSegundos = 5;
+  static const int _duracionTotalSegundos = 180; // 3 minutos
 
+  /// Inicia el pitido intermitente.
+  /// Suena cada 5 segundos a máximo volumen durante 3 minutos.
+  /// Luego se detiene automáticamente para ahorrar batería.
   static Future<void> iniciar() async {
     if (_sonando) return;
     _sonando = true;
 
     if (!_assetVerificado) {
+      // Intentar cargar el archivo WAV
       try {
-        await rootBundle.load('assets/sounds/baliza_alerta.mp3');
+        await rootBundle.load('assets/sounds/baliza_alerta.wav');
         _player = AudioPlayer();
-        await _player?.setSource(AssetSource('sounds/baliza_alerta.mp3'));
-        _player?.setVolume(1.0);
+        await _player?.setAudioContext(_audioContext);
+        await _player?.setSource(AssetSource('sounds/baliza_alerta.wav'));
+        _player?.setVolume(1.0); // Máximo volumen
         _player?.setReleaseMode(ReleaseMode.stop);
+        debugPrint('[LocalizadorSonido] Usando archivo WAV');
       } catch (e) {
-        debugPrint('[LocalizadorSonido] Asset no encontrado, usando fallback de sistema: $e');
+        debugPrint('[LocalizadorSonido] Asset WAV no encontrado: $e');
         _usarFallback = true;
       }
       _assetVerificado = true;
     }
 
+    // Primer pitido inmediato
     await _reproducirPitido();
 
-    if (!_usarFallback) {
-      _timer = Timer.periodic(
-        const Duration(seconds: _intervaloPitidoSegundos),
-        (_) async {
-          await _reproducirPitido();
-        },
-      );
-    }
+    // Pitidos cada 5 segundos
+    _pitidoTimer = Timer.periodic(
+      const Duration(seconds: _intervaloPitidoSegundos),
+      (_) async {
+        await _reproducirPitido();
+      },
+    );
+
+    // Auto-detener después de 3 minutos para ahorrar batería
+    _duracionTimer = Timer(
+      const Duration(seconds: _duracionTotalSegundos),
+      () {
+        debugPrint('[LocalizadorSonido] Tiempo de pitido cumplido (3 min), deteniendo...');
+        _detenerPitidos();
+      },
+    );
   }
 
   static Future<void> _reproducirPitido() async {
     if (_usarFallback) {
-      SystemSound.play(SystemSoundType.alert);
+      // Fallback: usar SystemSound que funciona en la mayoría de dispositivos
+      await SystemSound.play(SystemSoundType.alert);
+      // En algunos dispositivos el SystemSound no se escucha,
+      // así que también vibramos como respaldo
+      HapticFeedback.heavyImpact();
       return;
     }
     try {
@@ -54,24 +88,36 @@ class LocalizadorSonidoService {
         await _player?.resume();
       }
     } catch (e) {
-      SystemSound.play(SystemSoundType.alert);
       debugPrint('[LocalizadorSonido] Error reproduciendo: $e');
+      await SystemSound.play(SystemSoundType.alert);
     }
   }
 
-  static Future<void> detener() async {
-    _timer?.cancel();
-    _timer = null;
+  static void _detenerPitidos() {
+    _pitidoTimer?.cancel();
+    _pitidoTimer = null;
+    _duracionTimer?.cancel();
+    _duracionTimer = null;
     _sonando = false;
+
+    try {
+      _player?.stop();
+    } catch (e) {
+      debugPrint('[LocalizadorSonido] Error al detener player: $e');
+    }
+  }
+
+  /// Detiene el sonido inmediatamente (llamado al cancelar emergencia)
+  static Future<void> detener() async {
+    _detenerPitidos();
     _usarFallback = false;
     _assetVerificado = false;
 
     try {
-      await _player?.stop();
       await _player?.dispose();
       _player = null;
     } catch (e) {
-      debugPrint('[LocalizadorSonido] Error al detener: $e');
+      debugPrint('[LocalizadorSonido] Error al dispose: $e');
     }
   }
 

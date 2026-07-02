@@ -12,8 +12,9 @@ class LocationRepositoryImpl implements LocationRepository {
   Future<Coordenadas> obtenerUbicacionActual() async {
     final position = await _geolocator.getCurrentPosition(
       locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        timeLimit: Duration(seconds: 30),
+        // Usar baja precisión para ahorrar batería (~500m es suficiente para emergencias)
+        accuracy: LocationAccuracy.low,
+        timeLimit: Duration(seconds: 15),
       ),
     );
     return Coordenadas(

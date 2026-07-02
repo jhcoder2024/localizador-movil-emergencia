@@ -3,6 +3,7 @@ import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:provider/provider.dart';
 
 import 'package:localizador_movil_emergencia/domain/repositories/contacto_repository.dart';
+import 'package:localizador_movil_emergencia/domain/repositories/sms_repository.dart';
 import 'package:localizador_movil_emergencia/presentation/providers/config_provider.dart';
 import 'package:localizador_movil_emergencia/presentation/widgets/interval_section.dart';
 import 'package:localizador_movil_emergencia/presentation/widgets/contact_list_section.dart';
@@ -149,23 +150,72 @@ class _ConfigScreenState extends State<ConfigScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Token de Telegram',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w600),
+                        const Row(
+                          children: [
+                            Icon(Icons.sms, size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              'Envío de SMS automático',
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w600),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 8),
-                        TextField(
-                          obscureText: true,
-                          decoration: const InputDecoration(
-                            hintText: 'Ingresa tu token de Telegram',
-                            border: OutlineInputBorder(),
-                          ),
-                          onChanged: provider.setTelegramToken,
-                          controller: TextEditingController(
-                            text: provider.configuracion.telegramToken ?? '',
-                          ),
+                        Row(
+                          children: [
+                            Icon(
+                              provider.esAppSmsDefault
+                                  ? Icons.check_circle
+                                  : Icons.warning_amber_rounded,
+                              color: provider.esAppSmsDefault
+                                  ? Colors.green
+                                  : Colors.orange,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                provider.esAppSmsDefault
+                                    ? 'App de SMS predeterminada ✅'
+                                    : 'No eres la app de SMS predeterminada. '
+                                        'Los SMS solo se enviarán automáticamente si estableces esta app como predeterminada.',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: provider.esAppSmsDefault
+                                      ? Colors.green
+                                      : Colors.orange[900],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
+                        if (!provider.esAppSmsDefault) ...[
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: provider.abrirAjustesSmsDefault,
+                              icon: const Icon(Icons.open_in_new, size: 18),
+                              label: const Text(
+                                  'Establecer como app SMS predeterminada'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFD32F2F),
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Al tocar el botón, ve a "App de SMS" y selecciona '
+                            '"Localizador de Emergencia". Los SMS se enviarán '
+                            'automáticamente sin tu intervención.',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:localizador_movil_emergencia/domain/entities/configuracion.dart';
 import 'package:localizador_movil_emergencia/domain/entities/contacto_emergencia.dart';
 import 'package:localizador_movil_emergencia/domain/repositories/contacto_repository.dart';
+import 'package:localizador_movil_emergencia/domain/repositories/sms_repository.dart';
 import 'package:localizador_movil_emergencia/domain/usecases/guardar_configuracion_usecase.dart';
 import 'package:localizador_movil_emergencia/domain/usecases/obtener_configuracion_usecase.dart';
 import 'package:localizador_movil_emergencia/domain/usecases/obtener_contactos_usecase.dart';
@@ -14,7 +15,9 @@ class ConfigProvider extends ChangeNotifier {
   final ObtenerConfiguracionUseCase _obtenerConfiguracion;
   final VerificarDisponibilidadCanalUseCase _verificarCanales;
   final ContactoRepository _contactoRepository;
+  final SmsRepository _smsRepository;
   StreamSubscription? _configSub;
+  bool _esAppSmsDefault = false;
 
   ConfigProvider({
     required ObtenerContactosUseCase obtenerContactos,
@@ -22,11 +25,13 @@ class ConfigProvider extends ChangeNotifier {
     required ObtenerConfiguracionUseCase obtenerConfiguracion,
     required VerificarDisponibilidadCanalUseCase verificarCanales,
     required ContactoRepository contactoRepository,
+    required SmsRepository smsRepository,
   })  : _obtenerContactos = obtenerContactos,
         _guardarConfiguracion = guardarConfiguracion,
         _obtenerConfiguracion = obtenerConfiguracion,
         _verificarCanales = verificarCanales,
-        _contactoRepository = contactoRepository;
+        _contactoRepository = contactoRepository,
+        _smsRepository = smsRepository;
 
   Configuracion _configuracion = const Configuracion();
   List<ContactoTelefono> _contactosAgenda = [];
@@ -41,6 +46,19 @@ class ConfigProvider extends ChangeNotifier {
   String? get error => _error;
   bool get guardado => _guardado;
   bool get maxContactosAlcanzado => _configuracion.contactos.length >= 10;
+  bool get esAppSmsDefault => _esAppSmsDefault;
+
+  Future<void> verificarAppSmsDefault() async {
+    _esAppSmsDefault = await _smsRepository.esAppSmsDefault();
+    notifyListeners();
+  }
+
+  Future<void> abrirAjustesSmsDefault() async {
+    await _smsRepository.abrirAjustesSmsDefault();
+    // Re-verificar después de volver
+    await Future.delayed(const Duration(seconds: 2));
+    await verificarAppSmsDefault();
+  }
 
   Future<void> init() async {
     if (_configSub != null) return;
@@ -49,6 +67,7 @@ class ConfigProvider extends ChangeNotifier {
       notifyListeners();
     });
     await cargarContactosAgenda();
+    await verificarAppSmsDefault();
   }
 
   Future<void> cargarContactosAgenda() async {

@@ -47,6 +47,55 @@ class _MainScreenState extends State<MainScreen> {
                       estado: provider.estado,
                       onCancel: () => provider.cancelarEmergenciaActual(),
                     ),
+                  if (provider.estado.activa)
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF3E0),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFFF9800), width: 2),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(Icons.sms, size: 32, color: Color(0xFFE65100)),
+                          const SizedBox(height: 8),
+                          const Text(
+                            '📱 ENVIANDO UBICACIÓN POR SMS',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: Color(0xFFE65100),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Se abrirá la app de SMS con el mensaje listo.\n'
+                            'Toca "Enviar" para notificar a tus contactos.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.orange[900],
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () => provider.reintentarEnvio(),
+                              icon: const Icon(Icons.refresh, size: 18),
+                              label: const Text('RE-ENVIAR SMS AHORA'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFFF9800),
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   if (provider.ubicacionDenegada)
                     _buildWarningBanner(
                       icon: Icons.location_off,
