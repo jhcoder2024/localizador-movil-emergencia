@@ -21,7 +21,6 @@ void initPresentationModule() {
       guardarConfiguracion: getIt(),
       obtenerConfiguracion: getIt(),
       contactoRepository: getIt(),
-      smsRepository: getIt(),
     ),
   );
   getIt.registerFactory<InboxProvider>(

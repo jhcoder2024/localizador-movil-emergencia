@@ -20,22 +20,19 @@ class SmsRepositoryImpl implements SmsRepository {
       final telefonoNormalizado = _normalizarTelefono(telefono);
       debugPrint('[SmsRepository] Enviando SMS a $telefono (normalizado: $telefonoNormalizado)');
 
-      final esDefault = await esAppSmsDefault();
-
-      if (esDefault) {
-        debugPrint('[SmsRepository] App SMS default, enviando directamente...');
-        final result = await _channel.invokeMethod<bool>('sendSms', {
-          'telefono': telefonoNormalizado,
-          'mensaje': mensaje,
-        });
-        return result ?? false;
-      } else {
-        debugPrint('[SmsRepository] No somos default, abriendo app SMS...');
-        await _channel.invokeMethod('abrirAppSms', {
-          'telefono': telefonoNormalizado,
-          'mensaje': mensaje,
-        });
+      // Envío directo con SmsManager
+      // Con target SDK 33, funciona aunque no seamos la app SMS default
+      final result = await _channel.invokeMethod<bool>('sendSms', {
+        'telefono': telefonoNormalizado,
+        'mensaje': mensaje,
+      });
+      
+      if (result == true) {
+        debugPrint('[SmsRepository] SMS enviado directamente');
         return true;
+      } else {
+        debugPrint('[SmsRepository] Error: SMS no enviado');
+        return false;
       }
     } catch (e) {
       debugPrint('[SmsRepository] Error: $e');

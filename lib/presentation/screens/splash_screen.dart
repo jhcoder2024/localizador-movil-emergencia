@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:localizador_movil_emergencia/domain/repositories/sms_repository.dart';
 import 'package:localizador_movil_emergencia/domain/services/sms_sync_service.dart';
 import 'package:localizador_movil_emergencia/domain/services/sms_event_service.dart';
 import 'package:localizador_movil_emergencia/app/di/presentation_module.dart';
@@ -22,60 +21,6 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _inicializar() async {
     // Esperar un momento para mostrar el splash
     await Future.delayed(const Duration(seconds: 1));
-
-    if (!mounted) return;
-
-    // Verificar si la app es SMS default
-    final smsRepository = getIt<SmsRepository>();
-    final esDefault = await smsRepository.esAppSmsDefault();
-
-    if (!mounted) return;
-
-    if (!esDefault) {
-      // Preguntar al usuario si quiere ser app SMS default
-      final quiereSerDefault = await showDialog<bool>(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          title: const Row(
-            children: [
-              Icon(Icons.sms, color: Color(0xFFD32F2F)),
-              SizedBox(width: 8),
-              Expanded(child: Text('Envío automático de SMS')),
-            ],
-          ),
-          content: const Text(
-            'Para que la app pueda enviar SMS automáticamente '
-            'sin que tengas que tocar "Enviar" cada vez, '
-            'necesita ser tu aplicación de SMS predeterminada.\n\n'
-            'Se abrirán los Ajustes del sistema. Ve a "App de SMS" '
-            'y selecciona "Localizador de Emergencia".',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('AHORA NO'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFD32F2F),
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('SÍ, ESTABLECER'),
-            ),
-          ],
-        ),
-      );
-
-      if (!mounted) return;
-
-      if (quiereSerDefault == true) {
-        await smsRepository.solicitarSerSmsDefault();
-        // Esperar a que el usuario interactúe con el diálogo del sistema
-        await Future.delayed(const Duration(seconds: 2));
-      }
-    }
 
     if (!mounted) return;
 

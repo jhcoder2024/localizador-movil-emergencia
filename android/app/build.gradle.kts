@@ -26,7 +26,7 @@ android {
     defaultConfig {
         applicationId = "com.example.localizador_movil_emergencia"
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 33
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
