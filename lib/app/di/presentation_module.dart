@@ -2,6 +2,7 @@ import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 import 'package:localizador_movil_emergencia/presentation/providers/main_provider.dart';
 import 'package:localizador_movil_emergencia/presentation/providers/config_provider.dart';
+import 'package:localizador_movil_emergencia/presentation/providers/inbox_provider.dart';
 
 final getIt = GetIt.instance;
 
@@ -23,6 +24,11 @@ void initPresentationModule() {
       smsRepository: getIt(),
     ),
   );
+  getIt.registerFactory<InboxProvider>(
+    () => InboxProvider(
+      smsInboxRepository: getIt(),
+    ),
+  );
 }
 
 List<ChangeNotifierProvider> get providers => [
@@ -31,5 +37,8 @@ List<ChangeNotifierProvider> get providers => [
       ),
       ChangeNotifierProvider<ConfigProvider>(
         create: (_) => getIt<ConfigProvider>(),
+      ),
+      ChangeNotifierProvider<InboxProvider>(
+        create: (_) => getIt<InboxProvider>(),
       ),
     ];
