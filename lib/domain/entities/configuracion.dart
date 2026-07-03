@@ -4,14 +4,14 @@ import 'package:localizador_movil_emergencia/domain/entities/contacto_emergencia
 /// Configuración de la aplicación.
 ///
 /// ## Ahorro de batería
-/// - El intervalo de envío nunca debe ser menor a [intervaloMinimo] (1 minuto).
+/// - El intervalo de envío nunca debe ser menor a [intervaloMinimo] (5 minutos).
 class Configuracion extends Equatable {
   final int intervaloMinutos;
   final List<ContactoEmergencia> contactos;
   final String idioma;
   final String? telegramToken;
 
-  static const int intervaloMinimo = 1;
+  static const int intervaloMinimo = 5;
   static const int intervaloDefault = 5;
   static const int maxContactos = 10;
 

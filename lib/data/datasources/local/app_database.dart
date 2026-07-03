@@ -26,12 +26,56 @@ class ConfigTable extends Table {
   Set<Column> get primaryKey => {clave};
 }
 
-@DriftDatabase(tables: [ContactosTable, ConfigTable])
+class ConversationsTable extends Table {
+  TextColumn get id => text()();
+  TextColumn get remitente => text()();
+  TextColumn get telefono => text()();
+  TextColumn get ultimoMensaje => text()();
+  IntColumn get ultimaFecha => integer()();
+  IntColumn get noLeidos => integer().withDefault(const Constant(0))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+class SmsMessagesTable extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get conversationId => text()();
+  TextColumn get remitente => text()();
+  TextColumn get telefono => text()();
+  TextColumn get cuerpo => text()();
+  IntColumn get fecha => integer()();
+  IntColumn get tipo => integer()();
+  BoolColumn get leido => boolean().withDefault(const Constant(false))();
+  BoolColumn get tieneMms => boolean().withDefault(const Constant(false))();
+  TextColumn get estadoEnvio => text().withDefault(const Constant('sent'))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DriftDatabase(tables: [ContactosTable, ConfigTable, ConversationsTable, SmsMessagesTable])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 3;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) async {
+      await m.createAll();
+    },
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.createTable(conversationsTable);
+        await m.createTable(smsMessagesTable);
+      }
+      if (from < 3) {
+        await m.addColumn(smsMessagesTable, smsMessagesTable.estadoEnvio);
+      }
+    },
+  );
 
   Future<List<ContactosTableData>> getAllContactos() =>
       select(contactosTable).get();

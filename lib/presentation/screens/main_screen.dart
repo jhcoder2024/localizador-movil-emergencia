@@ -5,6 +5,7 @@ import 'package:localizador_movil_emergencia/domain/entities/tipo_emergencia.dar
 import 'package:localizador_movil_emergencia/presentation/providers/main_provider.dart';
 import 'package:localizador_movil_emergencia/presentation/widgets/emergency_button.dart';
 import 'package:localizador_movil_emergencia/presentation/widgets/emergency_active_banner.dart';
+import 'package:localizador_movil_emergencia/core/utils/permission_utils.dart';
 import 'package:localizador_movil_emergencia/presentation/widgets/confirmation_dialog.dart';
 
 class MainScreen extends StatefulWidget {
@@ -80,19 +81,7 @@ class _MainScreenState extends State<MainScreen> {
                             ),
                             textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: () => provider.reintentarEnvio(),
-                              icon: const Icon(Icons.refresh, size: 18),
-                              label: const Text('RE-ENVIAR SMS AHORA'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFF9800),
-                                foregroundColor: Colors.white,
-                              ),
-                            ),
-                          ),
+
                         ],
                       ),
                     ),
@@ -102,7 +91,19 @@ class _MainScreenState extends State<MainScreen> {
                       title: 'Permiso de ubicación denegado',
                       message:
                           'La aplicación no funcionará correctamente sin acceso a la ubicación. '
-                          'Ve a Ajustes > Aplicaciones > Localizador > Permisos y activa la ubicación.',
+                          'Toca el botón para conceder el permiso.',
+                      action: TextButton(
+                        onPressed: () async {
+                          final otorgado = await PermissionUtils.requestLocationPermission();
+                          if (otorgado) {
+                            await provider.reverificarPermisos();
+                          } else {
+                            await PermissionUtils.openSettings();
+                            await provider.reverificarPermisos();
+                          }
+                        },
+                        child: const Text('CONCEDER PERMISO'),
+                      ),
                     ),
                   if (provider.contactosFaltantes)
                     _buildWarningBanner(

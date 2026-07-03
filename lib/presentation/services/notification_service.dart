@@ -9,9 +9,6 @@ class NotificationService {
   /// Callback que se ejecuta cuando el usuario toca "Cancelar" en la notificación
   static VoidCallback? onCancelEmergencia;
 
-  /// Callback que se ejecuta cuando el usuario toca la notificación (vuelve a la app)
-  static VoidCallback? onNotificationTapped;
-
   static Future<void> initialize() async {
     const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -58,8 +55,6 @@ class NotificationService {
 
     if (response.actionId == 'cancelar_emergencia') {
       onCancelEmergencia?.call();
-    } else if (response.actionId == 'reenviar_sms') {
-      onNotificationTapped?.call();
     }
   }
 
@@ -68,11 +63,6 @@ class NotificationService {
     required String tiempoTranscurrido,
   }) async {
     // Acciones de la notificación
-    final reenviarAction = AndroidNotificationAction(
-      'reenviar_sms',
-      'RE-ENVIAR SMS',
-      showsUserInterface: true,
-    );
     final cancelAction = AndroidNotificationAction(
       'cancelar_emergencia',
       'CANCELAR',
@@ -83,7 +73,7 @@ class NotificationService {
     await _plugin.show(
       1001,
       '🚨 Localizador activo - ${tipo.displayName}',
-      'Tiempo: $tiempoTranscurrido — Toca para re-enviar SMS',
+      'Tiempo: $tiempoTranscurrido',
       NotificationDetails(
         android: AndroidNotificationDetails(
           'localizador_channel',
@@ -92,7 +82,7 @@ class NotificationService {
           priority: Priority.high,
           ongoing: true,
           autoCancel: false,
-          actions: [reenviarAction, cancelAction],
+          actions: [cancelAction],
         ),
       ),
       payload: 'emergencia_activa',
@@ -104,7 +94,7 @@ class NotificationService {
     await _plugin.show(
       1001,
       '🚨 LOCALIZADOR ACTIVO',
-      'Tiempo: $tiempo — Toca para re-enviar SMS',
+      'Tiempo: $tiempo',
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'localizador_channel',

@@ -4,6 +4,7 @@ import 'package:localizador_movil_emergencia/domain/repositories/config_reposito
 import 'package:localizador_movil_emergencia/domain/repositories/emergency_repository.dart';
 import 'package:localizador_movil_emergencia/domain/repositories/location_repository.dart';
 import 'package:localizador_movil_emergencia/domain/repositories/sms_repository.dart';
+import 'package:localizador_movil_emergencia/domain/repositories/sms_inbox_repository.dart';
 import 'package:localizador_movil_emergencia/domain/usecases/activar_emergencia_usecase.dart';
 import 'package:localizador_movil_emergencia/domain/usecases/cancelar_emergencia_usecase.dart';
 import 'package:localizador_movil_emergencia/domain/usecases/enviar_ubicacion_usecase.dart';
@@ -30,6 +31,7 @@ void initDomainModule() {
       getIt<EmergencyRepository>(),
       getIt<ConfigRepository>(),
       getIt<SmsRepository>(),
+      getIt<SmsInboxRepository>(),
     ),
   );
   getIt.registerLazySingleton<ObtenerContactosUseCase>(
@@ -44,7 +46,6 @@ void initDomainModule() {
   getIt.registerLazySingleton<VerificarDisponibilidadCanalUseCase>(
     () => VerificarDisponibilidadCanalUseCase(
       getIt<SmsRepository>(),
-      getIt<ConfigRepository>(),
     ),
   );
 }

@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
 import 'package:localizador_movil_emergencia/data/repositories/sms_repository_impl.dart';
 
 void main() {

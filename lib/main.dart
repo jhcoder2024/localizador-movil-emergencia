@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:localizador_movil_emergencia/app/di/data_module.dart';
 import 'package:localizador_movil_emergencia/app/di/domain_module.dart';
 import 'package:localizador_movil_emergencia/app/di/presentation_module.dart';
-import 'package:localizador_movil_emergencia/presentation/screens/main_screen.dart';
+import 'package:localizador_movil_emergencia/presentation/screens/home_screen.dart';
 import 'package:localizador_movil_emergencia/presentation/screens/config_screen.dart';
 import 'package:localizador_movil_emergencia/presentation/screens/permissions_screen.dart';
 import 'package:localizador_movil_emergencia/presentation/screens/splash_screen.dart';
+import 'package:localizador_movil_emergencia/presentation/screens/conversation_screen.dart';
 import 'package:localizador_movil_emergencia/core/theme/app_theme.dart';
-import 'package:localizador_movil_emergencia/presentation/services/emergency_background_service.dart';
 import 'package:localizador_movil_emergencia/presentation/services/notification_service.dart';
+import 'package:localizador_movil_emergencia/presentation/services/emergency_background_service.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -19,8 +21,8 @@ void main() async {
   await initDataModule();
   initDomainModule();
   initPresentationModule();
-  await EmergencyBackgroundService.initialize();
   await NotificationService.initialize();
+  await EmergencyBackgroundService.initialize();
   runApp(const LocalizadorEmergenciaApp());
 }
 
@@ -38,11 +40,19 @@ class LocalizadorEmergenciaApp extends StatelessWidget {
         ),
         GoRoute(
           path: '/',
-          pageBuilder: (context, state) => CustomTransitionPage(
-            key: state.pageKey,
-            child: const MainScreen(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                FadeTransition(opacity: animation, child: child),
+          builder: (context, state) {
+            final tab = state.uri.queryParameters['tab'] ?? 'emergencia';
+            return HomeScreen(initialTab: tab == 'inbox' ? 'inbox' : null);
+          },
+        ),
+        GoRoute(
+          path: '/inbox',
+          redirect: (context, state) => '/?tab=inbox',
+        ),
+        GoRoute(
+          path: '/conversation/:id',
+          builder: (context, state) => ConversationScreen(
+            conversationId: state.pathParameters['id']!,
           ),
         ),
         GoRoute(
@@ -79,6 +89,15 @@ class LocalizadorEmergenciaApp extends StatelessWidget {
         theme: AppTheme.lightTheme,
         routerConfig: router,
         debugShowCheckedModeBanner: false,
+        localizationsDelegates: [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+        ],
+        supportedLocales: [
+          const Locale('es', 'ES'),
+          const Locale('en', 'US'),
+        ],
+        locale: const Locale('es', 'ES'),
       ),
     );
   }

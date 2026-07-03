@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:localizador_movil_emergencia/domain/repositories/sms_repository.dart';
+import 'package:localizador_movil_emergencia/domain/services/sms_sync_service.dart';
+import 'package:localizador_movil_emergencia/domain/services/sms_event_service.dart';
 import 'package:localizador_movil_emergencia/app/di/presentation_module.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -23,55 +24,20 @@ class _SplashScreenState extends State<SplashScreen> {
 
     if (!mounted) return;
 
-    // Verificar si la app es SMS default
-    final smsRepository = getIt<SmsRepository>();
-    final esDefault = await smsRepository.esAppSmsDefault();
+    // Sincronizar SMS del sistema
+    try {
+      final smsSyncService = getIt<SmsSyncService>();
+      await smsSyncService.syncAll();
+    } catch (e) {
+      debugPrint('[Splash] Error en sync SMS: $e');
+    }
 
-    if (!mounted) return;
-
-    if (!esDefault) {
-      // Preguntar al usuario si quiere ser app SMS default
-      final quiereSerDefault = await showDialog<bool>(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          title: const Row(
-            children: [
-              Icon(Icons.sms, color: Color(0xFFD32F2F)),
-              SizedBox(width: 8),
-              Expanded(child: Text('Envío automático de SMS')),
-            ],
-          ),
-          content: const Text(
-            'Para que la app pueda enviar SMS automáticamente '
-            'sin que tengas que tocar "Enviar" cada vez, '
-            'necesita ser tu aplicación de SMS predeterminada.\n\n'
-            '¿Deseas establecerla ahora?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('AHORA NO'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFD32F2F),
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('SÍ, ESTABLECER'),
-            ),
-          ],
-        ),
-      );
-
-      if (!mounted) return;
-
-      if (quiereSerDefault == true) {
-        await smsRepository.solicitarSerSmsDefault();
-        // Esperar a que el usuario interactúe con el diálogo del sistema
-        await Future.delayed(const Duration(seconds: 2));
-      }
+    // Iniciar escucha de SMS entrantes
+    try {
+      final smsEventService = getIt<SmsEventService>();
+      smsEventService.startListening();
+    } catch (e) {
+      debugPrint('[Splash] Error en event service: $e');
     }
 
     if (!mounted) return;
