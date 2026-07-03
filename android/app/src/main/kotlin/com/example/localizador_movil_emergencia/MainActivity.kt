@@ -74,6 +74,12 @@ class MainActivity : FlutterActivity() {
                     val conversationId = call.argument<String>("conversationId") ?: ""
                     markAsReadInSystem(conversationId, result)
                 }
+                "sendSmsFromInbox" -> {
+                    val telefono = call.argument<String>("telefono") ?: ""
+                    val mensaje = call.argument<String>("mensaje") ?: ""
+                    val smsId = call.argument<Int>("smsId") ?: 0
+                    sendSmsFromInbox(telefono, mensaje, smsId, result)
+                }
                 else -> result.notImplemented()
             }
         }
@@ -292,6 +298,45 @@ class MainActivity : FlutterActivity() {
         } catch (e: Exception) {
             android.util.Log.e("[SmsSync]", "Error getNewSms", e)
             result.success(emptyList<Any>())
+        }
+    }
+
+    private fun sendSmsFromInbox(telefono: String, mensaje: String, smsId: Int, result: MethodChannel.Result) {
+        try {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                result.success(mapOf("exito" to false, "error" to "Permiso SEND_SMS no concedido"))
+                return
+            }
+
+            val smsManager = SmsManager.getDefault()
+            val sentIntent = PendingIntent.getBroadcast(
+                this,
+                smsId,
+                Intent("SMS_SENT").apply { putExtra("sms_id", smsId) },
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+            smsManager.sendTextMessage(telefono, null, mensaje, sentIntent, null)
+
+            // Insertar en ContentProvider de Android para consistencia
+            try {
+                val values = ContentValues().apply {
+                    put(Telephony.Sms.ADDRESS, telefono)
+                    put(Telephony.Sms.BODY, mensaje)
+                    put(Telephony.Sms.TYPE, Telephony.Sms.MESSAGE_TYPE_SENT)
+                    put(Telephony.Sms.DATE, System.currentTimeMillis())
+                    put(Telephony.Sms.READ, 1)
+                }
+                contentResolver.insert(Telephony.Sms.CONTENT_URI, values)
+            } catch (e: Exception) {
+                android.util.Log.w("[SmsInbox]", "Error insertando en ContentProvider: ${e.message}")
+            }
+
+            result.success(mapOf("exito" to true, "error" to null))
+        } catch (e: Exception) {
+            android.util.Log.e("[SmsInbox]", "Error sendSmsFromInbox", e)
+            result.success(mapOf("exito" to false, "error" to e.message))
         }
     }
 

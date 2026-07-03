@@ -12,6 +12,7 @@ class SmsMessage extends Equatable {
   final MensajeType tipo;
   final bool leido;
   final bool tieneMms;
+  final String estadoEnvio;
 
   const SmsMessage({
     this.id,
@@ -23,6 +24,7 @@ class SmsMessage extends Equatable {
     required this.tipo,
     this.leido = false,
     this.tieneMms = false,
+    this.estadoEnvio = 'sent',
   });
 
   SmsMessage copyWith({
@@ -35,6 +37,7 @@ class SmsMessage extends Equatable {
     MensajeType? tipo,
     bool? leido,
     bool? tieneMms,
+    String? estadoEnvio,
   }) {
     return SmsMessage(
       id: id ?? this.id,
@@ -46,9 +49,10 @@ class SmsMessage extends Equatable {
       tipo: tipo ?? this.tipo,
       leido: leido ?? this.leido,
       tieneMms: tieneMms ?? this.tieneMms,
+      estadoEnvio: estadoEnvio ?? this.estadoEnvio,
     );
   }
 
   @override
-  List<Object?> get props => [id, conversationId, remitente, telefono, cuerpo, fecha, tipo, leido, tieneMms];
+  List<Object?> get props => [id, conversationId, remitente, telefono, cuerpo, fecha, tipo, leido, tieneMms, estadoEnvio];
 }

@@ -48,6 +48,7 @@ class SmsMessagesTable extends Table {
   IntColumn get tipo => integer()();
   BoolColumn get leido => boolean().withDefault(const Constant(false))();
   BoolColumn get tieneMms => boolean().withDefault(const Constant(false))();
+  TextColumn get estadoEnvio => text().withDefault(const Constant('sent'))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -58,7 +59,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -69,6 +70,9 @@ class AppDatabase extends _$AppDatabase {
       if (from < 2) {
         await m.createTable(conversationsTable);
         await m.createTable(smsMessagesTable);
+      }
+      if (from < 3) {
+        await m.addColumn(smsMessagesTable, smsMessagesTable.estadoEnvio);
       }
     },
   );
