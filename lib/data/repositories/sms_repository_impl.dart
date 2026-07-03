@@ -4,6 +4,7 @@ import 'package:localizador_movil_emergencia/domain/repositories/sms_repository.
 
 class SmsRepositoryImpl implements SmsRepository {
   static const _channel = MethodChannel('com.example.localizador_movil_emergencia/sms');
+  static const _syncChannel = MethodChannel('com.example.localizador_movil_emergencia/sms_sync');
 
   String _normalizarTelefono(String telefono) {
     String limpio = telefono.replaceAll(RegExp(r'[^\d+]'), '');
@@ -20,20 +21,17 @@ class SmsRepositoryImpl implements SmsRepository {
       final telefonoNormalizado = _normalizarTelefono(telefono);
       debugPrint('[SmsRepository] Enviando SMS a $telefono (normalizado: $telefonoNormalizado)');
 
-      // Envío directo con SmsManager
-      // Con target SDK 33, funciona aunque no seamos la app SMS default
-      final result = await _channel.invokeMethod<bool>('sendSms', {
+      final smsId = DateTime.now().millisecondsSinceEpoch.remainder(100000).toInt();
+      
+      final result = await _syncChannel.invokeMethod<Map<dynamic, dynamic>>('sendSmsFromInbox', {
         'telefono': telefonoNormalizado,
         'mensaje': mensaje,
+        'smsId': smsId,
       });
       
-      if (result == true) {
-        debugPrint('[SmsRepository] SMS enviado directamente');
-        return true;
-      } else {
-        debugPrint('[SmsRepository] Error: SMS no enviado');
-        return false;
-      }
+      final exito = result?['exito'] == true;
+      debugPrint('[SmsRepository] Resultado envío: ${exito ? "EXITOSO" : "FALLIDO"}');
+      return exito;
     } catch (e) {
       debugPrint('[SmsRepository] Error: $e');
       return false;

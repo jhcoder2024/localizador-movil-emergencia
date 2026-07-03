@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:localizador_movil_emergencia/domain/entities/conversation.dart';
+import 'package:localizador_movil_emergencia/domain/services/sms_sync_service.dart';
+import 'package:localizador_movil_emergencia/app/di/presentation_module.dart';
 import 'package:localizador_movil_emergencia/presentation/providers/inbox_provider.dart';
 
 class InboxScreen extends StatefulWidget {
@@ -75,12 +77,15 @@ class _InboxScreenState extends State<InboxScreen> {
       );
     }
 
-    return ListView.builder(
-      itemCount: provider.conversations.length,
-      itemBuilder: (context, index) {
-        final conv = provider.conversations[index];
-        return _buildConversationTile(context, conv);
-      },
+    return RefreshIndicator(
+      onRefresh: _refreshSms,
+      child: ListView.builder(
+        itemCount: provider.conversations.length,
+        itemBuilder: (context, index) {
+          final conv = provider.conversations[index];
+          return _buildConversationTile(context, conv);
+        },
+      ),
     );
   }
 
@@ -136,6 +141,23 @@ class _InboxScreenState extends State<InboxScreen> {
 
   void _mostrarDialogoEmergencia(BuildContext context) {
     context.push('/?tab=emergencia');
+  }
+
+  Future<void> _refreshSms() async {
+    try {
+      final syncService = getIt<SmsSyncService>();
+      final nuevos = await syncService.syncIncremental();
+      if (nuevos > 0 && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$nuevos mensajes nuevos'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('[Inbox] Error refreshing: $e');
+    }
   }
 
   String _formatTime(DateTime date) {

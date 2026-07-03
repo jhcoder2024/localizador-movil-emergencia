@@ -24,13 +24,23 @@ class SmsSyncService {
   Future<int> syncAll() async {
     debugPrint('[SmsSync] Iniciando sincronización completa...');
     final smsList = await _contentProvider.getAllSms();
-    return _processSmsBatch(smsList);
+    final count = await _processSmsBatch(smsList);
+
+    // Actualizar timestamp para futuras sincronizaciones incrementales
+    await _configDao.setConfig(_lastSyncKey, DateTime.now().millisecondsSinceEpoch.toString());
+
+    return count;
   }
 
   Future<int> syncIncremental() async {
-    final lastSync = await _configDao.getConfig(_lastSyncKey);
-    final since = lastSync != null ? int.tryParse(lastSync) ?? 0 : 0;
-    
+    var lastSync = await _configDao.getConfig(_lastSyncKey);
+    var since = lastSync != null ? int.tryParse(lastSync) ?? 0 : 0;
+
+    // Si es la primera vez, tomar desde hace 1 hora
+    if (since == 0) {
+      since = DateTime.now().subtract(const Duration(hours: 1)).millisecondsSinceEpoch;
+    }
+
     debugPrint('[SmsSync] Sincronización incremental desde $since');
     final smsList = await _contentProvider.getNewSms(since);
     

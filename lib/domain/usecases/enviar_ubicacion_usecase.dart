@@ -33,9 +33,17 @@ class EnviarUbicacionUseCase {
       coordenadas.longitud,
     );
 
-    for (final contacto in config.contactos) {
-      final exito = await _smsRepository.enviarSms(contacto.telefono, mensaje);
+    debugPrint('[EnviarUbicacion] Iniciando envío a ${config.contactos.length} contacto(s)');
+    debugPrint('[EnviarUbicacion] Mensaje: $mensaje');
 
+    for (final contacto in config.contactos) {
+      debugPrint('[EnviarUbicacion] Enviando a ${contacto.telefono}...');
+      
+      // Enviar SMS
+      final exito = await _smsRepository.enviarSms(contacto.telefono, mensaje);
+      debugPrint('[EnviarUbicacion] Resultado envío a ${contacto.telefono}: $exito');
+      
+      // Guardar en bandeja de entrada local
       try {
         final conversationId = contacto.telefono.replaceAll(RegExp(r'[^\d+]'), '');
         final msg = SmsMessage(
@@ -49,7 +57,9 @@ class EnviarUbicacionUseCase {
           estadoEnvio: exito ? 'sent' : 'failed',
         );
         await _smsInboxRepository.insertMessage(msg);
-
+        debugPrint('[EnviarUbicacion] Mensaje guardado en inbox');
+        
+        // Actualizar conversación
         await _smsInboxRepository.upsertConversation(
           Conversation(
             id: conversationId,
@@ -66,5 +76,7 @@ class EnviarUbicacionUseCase {
 
       await Future.delayed(const Duration(milliseconds: 500));
     }
+    
+    debugPrint('[EnviarUbicacion] Envíos completados');
   }
 }

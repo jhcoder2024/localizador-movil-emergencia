@@ -86,6 +86,10 @@ class MainProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> reverificarPermisos() async {
+    await _verificarPermisos();
+  }
+
   void solicitarConfirmacion(TipoEmergencia tipo) {
     _tipoPendiente = tipo;
     _mostrarDialogoConfirmacion = true;
