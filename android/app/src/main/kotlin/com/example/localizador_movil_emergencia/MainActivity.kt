@@ -171,6 +171,23 @@ class MainActivity : FlutterActivity() {
         } catch (e: Exception) {}
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            unregisterReceiver(internalSmsReceiver)
+        } catch (e: Exception) {}
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (level >= TRIM_MEMORY_UI_HIDDEN) {
+            try {
+                val serviceIntent = Intent(this, id.flutter.flutter_background_service.BackgroundService::class.java)
+                stopService(serviceIntent)
+            } catch (e: Exception) {}
+        }
+    }
+
     private fun enviarSms(telefono: String, mensaje: String, result: MethodChannel.Result) {
         try {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)

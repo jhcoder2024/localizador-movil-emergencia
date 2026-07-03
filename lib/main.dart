@@ -10,6 +10,7 @@ import 'package:localizador_movil_emergencia/presentation/screens/splash_screen.
 import 'package:localizador_movil_emergencia/presentation/screens/conversation_screen.dart';
 import 'package:localizador_movil_emergencia/core/theme/app_theme.dart';
 import 'package:localizador_movil_emergencia/presentation/services/notification_service.dart';
+import 'package:localizador_movil_emergencia/presentation/services/emergency_background_service.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -21,6 +22,7 @@ void main() async {
   initDomainModule();
   initPresentationModule();
   await NotificationService.initialize();
+  await EmergencyBackgroundService.initialize();
   runApp(const LocalizadorEmergenciaApp());
 }
 
