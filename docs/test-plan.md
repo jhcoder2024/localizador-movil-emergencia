@@ -23,11 +23,11 @@ Este plan define la estrategia de pruebas funcionales, de regresión, rendimient
 - Pruebas de accesibilidad (WCAG)
 
 ### Dispositivos objetivo
-| Dispositivo | SO | API | Tipo |
-|---|---|---|---|
-| Samsung Galaxy A06 | Android 14 | API 34 | Físico — primario |
-| Pixel 6a (emulado) | Android 14 | API 34 | Emulador — secundario |
-| Pixel 7 (emulado) | Android 15 | API 35 | Emulador — humo |
+| Dispositivo | SO | API | Tipo | Notas |
+|---|---|---|---|---|
+| Samsung Galaxy A06 | Android 14 | API 34 | Físico — primario | One UI Core, SMS app default NO disponible |
+| Xiaomi Redmi Note 12 | Android 14 | API 34 | Físico — secundario | MIUI 14, SMS app default NO disponible |
+| Pixel 6a (emulado) | Android 14 | API 34 | Emulador | Referencia Android stock |
 
 ---
 
