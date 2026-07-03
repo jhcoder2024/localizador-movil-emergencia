@@ -20,34 +20,23 @@ class SmsRepositoryImpl implements SmsRepository {
       final telefonoNormalizado = _normalizarTelefono(telefono);
       debugPrint('[SmsRepository] Enviando SMS a $telefono (normalizado: $telefonoNormalizado)');
 
-      // 1. Intentar envío directo (SmsManager)
-      try {
+      final esDefault = await esAppSmsDefault();
+
+      if (esDefault) {
+        debugPrint('[SmsRepository] App SMS default, enviando directamente...');
         final result = await _channel.invokeMethod<bool>('sendSms', {
           'telefono': telefonoNormalizado,
           'mensaje': mensaje,
         });
-        if (result == true) {
-          debugPrint('[SmsRepository] SMS enviado directamente');
-          return true;
-        }
-      } catch (e) {
-        debugPrint('[SmsRepository] Envío directo falló: $e');
+        return result ?? false;
+      } else {
+        debugPrint('[SmsRepository] No somos default, abriendo app SMS...');
+        await _channel.invokeMethod('abrirAppSms', {
+          'telefono': telefonoNormalizado,
+          'mensaje': mensaje,
+        });
+        return true;
       }
-
-      // 2. Verificar si somos app SMS default
-      final esDefault = await esAppSmsDefault();
-      if (!esDefault) {
-        debugPrint('[SmsRepository] No somos app SMS default. Solicitando...');
-        // Mostrar diálogo de confirmación en la UI mejor aquí
-      }
-
-      // 3. Fallback: abrir app de SMS
-      debugPrint('[SmsRepository] Abriendo app de SMS como fallback...');
-      await _channel.invokeMethod('abrirAppSms', {
-        'telefono': telefonoNormalizado,
-        'mensaje': mensaje,
-      });
-      return true;
     } catch (e) {
       debugPrint('[SmsRepository] Error: $e');
       return false;

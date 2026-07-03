@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:localizador_movil_emergencia/app/di/data_module.dart';
 import 'package:localizador_movil_emergencia/app/di/domain_module.dart';
 import 'package:localizador_movil_emergencia/app/di/presentation_module.dart';
@@ -88,6 +89,15 @@ class LocalizadorEmergenciaApp extends StatelessWidget {
         theme: AppTheme.lightTheme,
         routerConfig: router,
         debugShowCheckedModeBanner: false,
+        localizationsDelegates: [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+        ],
+        supportedLocales: [
+          const Locale('es', 'ES'),
+          const Locale('en', 'US'),
+        ],
+        locale: const Locale('es', 'ES'),
       ),
     );
   }

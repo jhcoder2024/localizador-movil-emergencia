@@ -9,12 +9,14 @@ import 'package:localizador_movil_emergencia/domain/repositories/location_reposi
 import 'package:localizador_movil_emergencia/domain/repositories/emergency_repository.dart';
 import 'package:localizador_movil_emergencia/domain/repositories/config_repository.dart';
 import 'package:localizador_movil_emergencia/domain/repositories/sms_repository.dart';
+import 'package:localizador_movil_emergencia/domain/repositories/sms_inbox_repository.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockLocationRepository extends Mock implements LocationRepository {}
 class MockEmergencyRepository extends Mock implements EmergencyRepository {}
 class MockConfigRepository extends Mock implements ConfigRepository {}
 class MockSmsRepository extends Mock implements SmsRepository {}
+class MockSmsInboxRepository extends Mock implements SmsInboxRepository {}
 
 void main() {
   late EnviarUbicacionUseCase useCase;
@@ -22,17 +24,20 @@ void main() {
   late MockEmergencyRepository mockEmergency;
   late MockConfigRepository mockConfig;
   late MockSmsRepository mockSms;
+  late MockSmsInboxRepository mockSmsInbox;
 
   setUp(() {
     mockLocation = MockLocationRepository();
     mockEmergency = MockEmergencyRepository();
     mockConfig = MockConfigRepository();
     mockSms = MockSmsRepository();
+    mockSmsInbox = MockSmsInboxRepository();
     useCase = EnviarUbicacionUseCase(
       mockLocation,
       mockEmergency,
       mockConfig,
       mockSms,
+      mockSmsInbox,
     );
   });
 

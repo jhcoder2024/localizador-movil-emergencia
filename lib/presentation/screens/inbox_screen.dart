@@ -35,11 +35,14 @@ class _InboxScreenState extends State<InboxScreen> {
             ],
           ),
           body: _buildBody(provider),
-          floatingActionButton: FloatingActionButton(
+          floatingActionButton: FloatingActionButton.extended(
             onPressed: () {
-              // TODO: Navegar a compose screen en Sprint 4
+              _mostrarDialogoEmergencia(context);
             },
-            child: const Icon(Icons.edit),
+            backgroundColor: const Color(0xFFD32F2F),
+            foregroundColor: Colors.white,
+            icon: const Icon(Icons.warning_amber_rounded),
+            label: const Text('EMERGENCIA'),
           ),
         );
       },
@@ -129,6 +132,10 @@ class _InboxScreenState extends State<InboxScreen> {
         context.push('/conversation/${conv.id}');
       },
     );
+  }
+
+  void _mostrarDialogoEmergencia(BuildContext context) {
+    context.push('/?tab=emergencia');
   }
 
   String _formatTime(DateTime date) {
