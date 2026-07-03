@@ -516,3 +516,26 @@ cd /home/jhcoder/proyectos/Personal/localizador-movil-emergencia
 JAVA_HOME=~/.jdks/temurin-25.0.3 flutter build apk --debug --android-skip-build-dependency-validation 2>&1
 adb install -r -d build/app/outputs/flutter-apk/app-debug.apk 2>&1
 ```
+
+## 9. Resultados de pruebas — Xiaomi Redmi Note 12 (MIUI 14)
+
+| TC | Descripción | Resultado | Observaciones |
+|----|-------------|-----------|---------------|
+| TC-001 | Visualizar lista de conversaciones | ✅ | Se requirió conceder READ_SMS manualmente en ajustes |
+| TC-005 | Sincronización SMS al abrir la app | ✅ | |
+| TC-009 | Enviar mensaje de texto desde chat | ✅ | |
+| TC-014 | FAB emergencia en InboxScreen | ✅ | |
+| TC-015 | BottomNavigationBar | ✅ | |
+| TC-016 | Diálogo de confirmación | ✅ | |
+| TC-018 | Envío automático de SMS | ✅ | |
+| TC-021 | Sonido de alarma | ✅ | |
+| TC-022 | Notificación con botón CANCELAR | ✅ | |
+| TC-026 | Foreground service en segundo plano | ✅ | |
+
+### Problemas específicos de MIUI
+
+| # | Problema | Solución |
+|---|----------|----------|
+| 1 | Permiso READ_SMS no se solicita automáticamente | El usuario debe ir a Ajustes > Apps > Localizador > Permisos y activarlo manualmente |
+| 2 | Timeout de ubicación al activar emergencia sin permiso | Se agregó solicitud automática de permiso de ubicación en `_verificarPermisos()` |
+| 3 | Banner de permiso no aparecía | Se movió la solicitud de permiso al inicio de la app |

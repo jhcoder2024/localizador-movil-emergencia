@@ -75,16 +75,22 @@ class MainProvider extends ChangeNotifier {
   }
 
   Future<void> _verificarPermisos() async {
+    // Verificar ubicación
     _ubicacionDenegada = !await PermissionUtils.checkLocationPermission();
-    _smsDenegado = !await PermissionUtils.checkSmsPermission();
-    notifyListeners();
+    if (_ubicacionDenegada) {
+      // Solicitar permiso de ubicación
+      final otorgado = await PermissionUtils.requestLocationPermission();
+      _ubicacionDenegada = !otorgado;
+    }
     
-    // Si el permiso SMS está denegado, solicitarlo
+    // Verificar SMS
+    _smsDenegado = !await PermissionUtils.checkSmsPermission();
     if (_smsDenegado) {
       await PermissionUtils.requestSmsPermission();
       _smsDenegado = !await PermissionUtils.checkSmsPermission();
-      notifyListeners();
     }
+    
+    notifyListeners();
   }
 
   Future<void> reverificarPermisos() async {
@@ -146,7 +152,16 @@ class MainProvider extends ChangeNotifier {
       }
 
       // Envío inicial inmediato
-      await _enviarUbicacion.call(_tipoPendiente!);
+      try {
+        await _enviarUbicacion.call(_tipoPendiente!);
+      } catch (e) {
+        debugPrint('[MainProvider] Error en envío inicial: $e');
+        // Si falla por timeout de ubicación, verificar permisos
+        if (e.toString().contains('Timeout') || e.toString().contains('location')) {
+          _ubicacionDenegada = true;
+          notifyListeners();
+        }
+      }
 
       // Iniciar envíos periódicos
       _iniciarEnviosPeriodicos(_tipoPendiente!);
