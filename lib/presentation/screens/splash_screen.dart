@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:localizador_movil_emergencia/domain/repositories/sms_repository.dart';
+import 'package:localizador_movil_emergencia/domain/services/sms_sync_service.dart';
+import 'package:localizador_movil_emergencia/domain/services/sms_event_service.dart';
 import 'package:localizador_movil_emergencia/app/di/presentation_module.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -73,6 +75,24 @@ class _SplashScreenState extends State<SplashScreen> {
         // Esperar a que el usuario interactúe con el diálogo del sistema
         await Future.delayed(const Duration(seconds: 2));
       }
+    }
+
+    if (!mounted) return;
+
+    // Sincronizar SMS del sistema
+    try {
+      final smsSyncService = getIt<SmsSyncService>();
+      await smsSyncService.syncAll();
+    } catch (e) {
+      debugPrint('[Splash] Error en sync SMS: $e');
+    }
+
+    // Iniciar escucha de SMS entrantes
+    try {
+      final smsEventService = getIt<SmsEventService>();
+      smsEventService.startListening();
+    } catch (e) {
+      debugPrint('[Splash] Error en event service: $e');
     }
 
     if (!mounted) return;
