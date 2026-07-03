@@ -12,6 +12,7 @@ import 'package:localizador_movil_emergencia/domain/usecases/obtener_configuraci
 import 'package:localizador_movil_emergencia/presentation/services/emergency_background_service.dart';
 import 'package:localizador_movil_emergencia/presentation/services/localizador_sonido_service.dart';
 import 'package:localizador_movil_emergencia/presentation/services/notification_service.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class MainProvider extends ChangeNotifier {
   final ActivarEmergenciaUseCase _activarEmergencia;
@@ -127,6 +128,13 @@ class MainProvider extends ChangeNotifier {
       NotificationService.onCancelEmergencia = () {
         cancelarEmergenciaActual();
       };
+      // Solicitar permiso de notificaciones (Android 14+)
+      try {
+        await Permission.notification.request();
+      } catch (e) {
+        debugPrint('[MainProvider] Error solicitando permiso notificación: $e');
+      }
+
       // Mostrar notificación permanente
       try {
         await NotificationService.showEmergencyNotification(
@@ -196,11 +204,13 @@ class MainProvider extends ChangeNotifier {
       _envioPeriodicoTimer = null;
 
       await _cancelarEmergencia.call();
+
       try {
         await EmergencyBackgroundService.stop();
       } catch (e) {
         debugPrint('[MainProvider] Error al detener foreground service: $e');
       }
+
       LocalizadorSonidoService.detener();
 
       try {

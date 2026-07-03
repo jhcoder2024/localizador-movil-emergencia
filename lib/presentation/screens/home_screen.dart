@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:localizador_movil_emergencia/app/di/presentation_module.dart';
+import 'package:localizador_movil_emergencia/presentation/providers/main_provider.dart';
 import 'package:localizador_movil_emergencia/presentation/screens/main_screen.dart';
 import 'package:localizador_movil_emergencia/presentation/screens/inbox_screen.dart';
 

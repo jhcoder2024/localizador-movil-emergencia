@@ -470,3 +470,49 @@ Este plan define la estrategia de pruebas funcionales, de regresión, rendimient
 | Batería / Rendimiento | 3 (TC-038 a TC-040) |
 | Permisos | 5 (TC-041 a TC-045) |
 | **Total** | **45** |
+
+## 8. Resultados de pruebas — Samsung Galaxy A06
+
+| TC | Descripción | Resultado | Observaciones |
+|----|-------------|-----------|---------------|
+| TC-001 | Visualizar lista de conversaciones | ✅ | |
+| TC-002 | Remitente, preview, hora, badge | ✅ | |
+| TC-004 | Orden por fecha descendente | ✅ | |
+| TC-005 | Sincronización SMS al abrir la app | ✅ | Se corrigió error de casteo Map<Object?,Object?> |
+| TC-006 | Pull-to-refresh nuevos SMS | ✅ | |
+| TC-007 | Abrir conversación desde inbox | ✅ | |
+| TC-008 | Burbujas de chat (recibidas/enviadas) | ✅ | |
+| TC-009 | Enviar mensaje de texto | ✅ | SMS llega al destinatario |
+| TC-014 | FAB emergencia en InboxScreen | ✅ | |
+| TC-015 | BottomNavigationBar | ✅ | |
+| TC-016 | Diálogo de confirmación | ✅ | |
+| TC-017 | Tipos de emergencia | ✅ | |
+| TC-018 | Envío automático de SMS | ✅ | Con formato geo:lat,lon. La URL larga de Maps era bloqueada por el carrier |
+| TC-020 | Contador de tiempo en banner | ✅ | Se actualiza cada 1 minuto |
+| TC-021 | Sonido de alarma | ✅ | Cada 5s, duración = mitad del intervalo configurado |
+| TC-022 | Notificación con botón CANCELAR | ✅ | |
+| TC-023 | Cancelar desde notificación | ✅ | |
+| TC-025 | Re-envío periódico | ✅ | Se corrigió bug: Timer usaba .first en Stream que se colgaba |
+| TC-026 | Foreground service en segundo plano | ✅ | Sonido se mantiene al presionar botón de inicio |
+| TC-029 | Agregar contacto de emergencia | ✅ | |
+| TC-031 | Configurar intervalo de envío | ✅ | Mínimo 5 min |
+
+### Problemas encontrados y soluciones
+
+| # | Problema | Solución |
+|---|----------|----------|
+| 1 | Error de casteo `Map<Object?, Object?>` en sincronización | Conversión manual de tipos en `SmsContentProviderDataSource` |
+| 2 | SMS no llegaba con URL larga de Google Maps | Cambiado a formato `geo:lat,lon` (~20 chars) |
+| 3 | Banner de permiso no desaparecía al concederlo | Agregado método `reverificarPermisos()` |
+| 4 | Target SDK bajado de 35 a 33 | Para evitar restricciones de SmsManager en Android 14 |
+| 5 | Timer periódico se colgaba esperando evento del Stream | Cambiado a usar `_estado` cacheado del provider |
+| 6 | Sonido no se reactivaba en re-envíos | Agregado reinicio de sonido en cada ciclo del timer |
+| 7 | Notificación no aparecía por falta de permiso | Agregado `Permission.notification.request()` |
+
+## Compilar e instalar (opcional)
+
+```bash
+cd /home/jhcoder/proyectos/Personal/localizador-movil-emergencia
+JAVA_HOME=~/.jdks/temurin-25.0.3 flutter build apk --debug --android-skip-build-dependency-validation 2>&1
+adb install -r -d build/app/outputs/flutter-apk/app-debug.apk 2>&1
+```
