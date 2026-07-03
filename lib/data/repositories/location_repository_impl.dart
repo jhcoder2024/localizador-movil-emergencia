@@ -21,8 +21,7 @@ class LocationRepositoryImpl implements LocationRepository {
       latitud: position.latitude,
       longitud: position.longitude,
       timestamp: DateTime.fromMillisecondsSinceEpoch(
-        position.timestamp?.millisecondsSinceEpoch ??
-            DateTime.now().millisecondsSinceEpoch,
+        position.timestamp.millisecondsSinceEpoch,
       ),
       precision: position.accuracy,
     );

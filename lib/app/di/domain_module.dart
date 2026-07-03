@@ -44,7 +44,6 @@ void initDomainModule() {
   getIt.registerLazySingleton<VerificarDisponibilidadCanalUseCase>(
     () => VerificarDisponibilidadCanalUseCase(
       getIt<SmsRepository>(),
-      getIt<ConfigRepository>(),
     ),
   );
 }

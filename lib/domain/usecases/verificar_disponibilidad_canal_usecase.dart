@@ -1,5 +1,4 @@
 import 'package:localizador_movil_emergencia/domain/repositories/sms_repository.dart';
-import 'package:localizador_movil_emergencia/domain/repositories/config_repository.dart';
 
 class DisponibilidadCanales {
   final bool smsDisponible;
@@ -11,11 +10,9 @@ class DisponibilidadCanales {
 
 class VerificarDisponibilidadCanalUseCase {
   final SmsRepository _smsRepository;
-  final ConfigRepository _configRepository;
 
   VerificarDisponibilidadCanalUseCase(
     this._smsRepository,
-    this._configRepository,
   );
 
   Future<DisponibilidadCanales> call() async {

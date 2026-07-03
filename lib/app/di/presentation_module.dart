@@ -17,10 +17,8 @@ void initPresentationModule() {
   );
   getIt.registerFactory<ConfigProvider>(
     () => ConfigProvider(
-      obtenerContactos: getIt(),
       guardarConfiguracion: getIt(),
       obtenerConfiguracion: getIt(),
-      verificarCanales: getIt(),
       contactoRepository: getIt(),
       smsRepository: getIt(),
     ),

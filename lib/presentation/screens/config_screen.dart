@@ -3,7 +3,6 @@ import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:provider/provider.dart';
 
 import 'package:localizador_movil_emergencia/domain/repositories/contacto_repository.dart';
-import 'package:localizador_movil_emergencia/domain/repositories/sms_repository.dart';
 import 'package:localizador_movil_emergencia/presentation/providers/config_provider.dart';
 import 'package:localizador_movil_emergencia/presentation/widgets/interval_section.dart';
 import 'package:localizador_movil_emergencia/presentation/widgets/contact_list_section.dart';

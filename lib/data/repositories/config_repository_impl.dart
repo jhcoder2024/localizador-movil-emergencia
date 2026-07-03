@@ -5,7 +5,6 @@ import 'package:localizador_movil_emergencia/data/datasources/local/config_dao.d
 import 'package:localizador_movil_emergencia/data/datasources/local/secure_storage_datasource.dart';
 import 'package:localizador_movil_emergencia/data/mappers/config_mapper.dart';
 import 'package:localizador_movil_emergencia/data/models/configuracion_model.dart';
-import 'package:localizador_movil_emergencia/data/models/contacto_model.dart';
 import 'package:localizador_movil_emergencia/domain/entities/configuracion.dart';
 import 'package:localizador_movil_emergencia/domain/repositories/config_repository.dart';
 
