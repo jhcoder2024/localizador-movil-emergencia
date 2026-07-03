@@ -59,50 +59,29 @@ class MainActivity : FlutterActivity() {
             return
         }
 
-        // Método 1: Usar RoleManager (Android 10+)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            try {
-                val roleManager = getSystemService(android.app.role.RoleManager::class.java)
-                val intent = roleManager.createRequestRoleIntent(android.app.role.RoleManager.ROLE_SMS)
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                startActivity(intent)
-                android.util.Log.i("[SmsRepository]", "RoleManager: diálogo solicitado")
-                result.success(true)
-                return
-            } catch (e: Exception) {
-                android.util.Log.w("[SmsRepository]", "RoleManager falló: ${e.message}")
-            }
-        }
-
-        // Método 2: Usar ACTION_CHANGE_DEFAULT (API 29+)
-        if (Build.VERSION.SDK_INT >= 29) {
-            try {
-                @Suppress("DEPRECATION")
-                val intent = Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT).apply {
-                    putExtra(Intent.EXTRA_PACKAGE_NAME, packageName)
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-                startActivity(intent)
-                android.util.Log.i("[SmsRepository]", "ACTION_CHANGE_DEFAULT: intent lanzado")
-                result.success(true)
-                return
-            } catch (e: Exception) {
-                android.util.Log.w("[SmsRepository]", "ACTION_CHANGE_DEFAULT falló: ${e.message}")
-            }
-        }
-
-        // Método 3: Abrir ajustes de apps predeterminadas (funciona en TODOS)
         try {
+            // Abrir directamente la página de configuración de apps predeterminadas
+            // Este método funciona en TODOS los Android sin excepción
             val intent = Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
             }
             startActivity(intent)
-            android.util.Log.i("[SmsRepository]", "Ajustes default apps abiertos")
+            android.util.Log.i("[SmsRepository]", "Ajustes de apps predeterminadas abiertos")
             result.success(true)
         } catch (e: Exception) {
-            android.util.Log.e("[SmsRepository]", "Todos los métodos fallaron", e)
-            result.success(false)
+            android.util.Log.e("[SmsRepository]", "Error abriendo ajustes", e)
+            // Último recurso: abrir ajustes generales
+            try {
+                val intent = Intent(Settings.ACTION_SETTINGS).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                startActivity(intent)
+                result.success(true)
+            } catch (e2: Exception) {
+                android.util.Log.e("[SmsRepository]", "Error fatal", e2)
+                result.success(false)
+            }
         }
     }
 

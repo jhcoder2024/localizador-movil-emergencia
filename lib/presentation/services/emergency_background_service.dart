@@ -1,9 +1,5 @@
 import 'package:flutter_background_service/flutter_background_service.dart';
 
-/// Servicio en primer plano que mantiene la app viva en segundo plano.
-/// No ejecuta lógica de negocio (eso lo hace MainProvider).
-/// Su única función es evitar que Android mate el proceso,
-/// permitiendo que el sonido de alarma y los timers sigan funcionando.
 class EmergencyBackgroundService {
   static bool _inicializado = false;
 
@@ -32,8 +28,16 @@ class EmergencyBackgroundService {
 
   @pragma('vm:entry-point')
   static void onStart(ServiceInstance service) {
-    // Este servicio solo mantiene el proceso vivo.
-    // No necesita dependencias de GetIt.
+    // Es OBLIGATORIO llamar a setAsForegroundService inmediatamente
+    // para que Android no mate el servicio
+    if (service is AndroidServiceInstance) {
+      service.setAsForegroundService();
+      service.setForegroundNotificationInfo(
+        title: '🚨 Localizador de Emergencia',
+        content: 'Emergencia activa - Seguimiento en segundo plano',
+      );
+    }
+
     service.on('stop').listen((event) {
       service.stopSelf();
     });
