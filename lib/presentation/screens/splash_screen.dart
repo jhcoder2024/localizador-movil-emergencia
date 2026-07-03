@@ -46,7 +46,8 @@ class _SplashScreenState extends State<SplashScreen> {
             'Para que la app pueda enviar SMS automáticamente '
             'sin que tengas que tocar "Enviar" cada vez, '
             'necesita ser tu aplicación de SMS predeterminada.\n\n'
-            '¿Deseas establecerla ahora?',
+            'Se abrirán los Ajustes del sistema. Ve a "App de SMS" '
+            'y selecciona "Localizador de Emergencia".',
           ),
           actions: [
             TextButton(

@@ -80,6 +80,13 @@ class MainProvider extends ChangeNotifier {
     _ubicacionDenegada = !await PermissionUtils.checkLocationPermission();
     _smsDenegado = !await PermissionUtils.checkSmsPermission();
     notifyListeners();
+    
+    // Si el permiso SMS está denegado, solicitarlo
+    if (_smsDenegado) {
+      await PermissionUtils.requestSmsPermission();
+      _smsDenegado = !await PermissionUtils.checkSmsPermission();
+      notifyListeners();
+    }
   }
 
   void solicitarConfirmacion(TipoEmergencia tipo) {
