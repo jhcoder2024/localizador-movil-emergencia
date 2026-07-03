@@ -7,7 +7,14 @@ class SmsContentProviderDataSource {
   Future<List<Map<String, dynamic>>> getAllSms() async {
     try {
       final result = await _syncChannel.invokeMethod<List<dynamic>>('getAllSms');
-      return result?.cast<Map<String, dynamic>>() ?? [];
+      if (result == null) return [];
+      
+      return result.map((item) {
+        if (item is Map) {
+          return item.map((key, value) => MapEntry(key.toString(), value));
+        }
+        return <String, dynamic>{};
+      }).toList();
     } catch (e) {
       debugPrint('[SmsContentProvider] Error getAllSms: $e');
       return [];
@@ -19,7 +26,14 @@ class SmsContentProviderDataSource {
       final result = await _syncChannel.invokeMethod<List<dynamic>>('getNewSms', {
         'sinceTimestamp': sinceTimestamp,
       });
-      return result?.cast<Map<String, dynamic>>() ?? [];
+      if (result == null) return [];
+      
+      return result.map((item) {
+        if (item is Map) {
+          return item.map((key, value) => MapEntry(key.toString(), value));
+        }
+        return <String, dynamic>{};
+      }).toList();
     } catch (e) {
       debugPrint('[SmsContentProvider] Error getNewSms: $e');
       return [];

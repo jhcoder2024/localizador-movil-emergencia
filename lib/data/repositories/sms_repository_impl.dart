@@ -4,6 +4,7 @@ import 'package:localizador_movil_emergencia/domain/repositories/sms_repository.
 
 class SmsRepositoryImpl implements SmsRepository {
   static const _channel = MethodChannel('com.example.localizador_movil_emergencia/sms');
+  static const _syncChannel = MethodChannel('com.example.localizador_movil_emergencia/sms_sync');
 
   String _normalizarTelefono(String telefono) {
     String limpio = telefono.replaceAll(RegExp(r'[^\d+]'), '');
@@ -20,23 +21,17 @@ class SmsRepositoryImpl implements SmsRepository {
       final telefonoNormalizado = _normalizarTelefono(telefono);
       debugPrint('[SmsRepository] Enviando SMS a $telefono (normalizado: $telefonoNormalizado)');
 
-      final esDefault = await esAppSmsDefault();
-
-      if (esDefault) {
-        debugPrint('[SmsRepository] App SMS default, enviando directamente...');
-        final result = await _channel.invokeMethod<bool>('sendSms', {
-          'telefono': telefonoNormalizado,
-          'mensaje': mensaje,
-        });
-        return result ?? false;
-      } else {
-        debugPrint('[SmsRepository] No somos default, abriendo app SMS...');
-        await _channel.invokeMethod('abrirAppSms', {
-          'telefono': telefonoNormalizado,
-          'mensaje': mensaje,
-        });
-        return true;
-      }
+      final smsId = DateTime.now().millisecondsSinceEpoch.remainder(100000).toInt();
+      
+      final result = await _syncChannel.invokeMethod<Map<dynamic, dynamic>>('sendSmsFromInbox', {
+        'telefono': telefonoNormalizado,
+        'mensaje': mensaje,
+        'smsId': smsId,
+      });
+      
+      final exito = result?['exito'] == true;
+      debugPrint('[SmsRepository] Resultado envío: ${exito ? "EXITOSO" : "FALLIDO"}');
+      return exito;
     } catch (e) {
       debugPrint('[SmsRepository] Error: $e');
       return false;

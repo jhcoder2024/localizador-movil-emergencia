@@ -181,48 +181,36 @@ class MainActivity : FlutterActivity() {
                 return
             }
 
-            try {
-                val smsManager = SmsManager.getDefault()
-                val sentIntent = PendingIntent.getBroadcast(
-                    this,
-                    System.currentTimeMillis().toInt(),
-                    Intent("SMS_SENT"),
-                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-                )
-                smsManager.sendTextMessage(telefono, null, mensaje, sentIntent, null)
-                android.util.Log.i("[SmsRepository]", "SMS enviado por SmsManager a $telefono")
-                result.success(true)
-                return
-            } catch (e: Exception) {
-                android.util.Log.w("[SmsRepository]", "SmsManager falló: ${e.message}")
-            }
+            val smsManager = SmsManager.getDefault()
+            val sentIntent = PendingIntent.getBroadcast(
+                this,
+                System.currentTimeMillis().toInt(),
+                Intent("SMS_SENT"),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+            smsManager.sendTextMessage(telefono, null, mensaje, sentIntent, null)
 
+            // Insertar en ContentProvider para consistencia
             try {
                 val values = ContentValues().apply {
                     put(Telephony.Sms.ADDRESS, telefono)
                     put(Telephony.Sms.BODY, mensaje)
-                    put(Telephony.Sms.TYPE, Telephony.Sms.MESSAGE_TYPE_OUTBOX)
-                    put(Telephony.Sms.STATUS, Telephony.Sms.STATUS_PENDING)
+                    put(Telephony.Sms.TYPE, Telephony.Sms.MESSAGE_TYPE_SENT)
                     put(Telephony.Sms.DATE, System.currentTimeMillis())
-                    put(Telephony.Sms.READ, 0)
-                    put(Telephony.Sms.SEEN, 0)
+                    put(Telephony.Sms.READ, 1)
                 }
                 contentResolver.insert(Telephony.Sms.CONTENT_URI, values)
-                android.util.Log.i("[SmsRepository]", "SMS insertado en bandeja de salida para $telefono")
-                result.success(true)
-                return
             } catch (e: Exception) {
-                android.util.Log.w("[SmsRepository]", "Inserción en bandeja falló: ${e.message}")
+                android.util.Log.w("[SmsRepository]", "Error insertando en ContentProvider: ${e.message}")
             }
 
-            android.util.Log.e("[SmsRepository]", "Todos los métodos de envío fallaron")
-            result.success(false)
+            android.util.Log.i("[SmsRepository]", "SMS enviado a $telefono")
+            result.success(true)
         } catch (e: Exception) {
-            android.util.Log.e("[SmsRepository]", "Error general", e)
+            android.util.Log.e("[SmsRepository]", "Error enviando SMS", e)
             result.success(false)
         }
     }
-
     private fun getAllSms(result: MethodChannel.Result) {
         try {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_SMS)
