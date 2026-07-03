@@ -32,4 +32,8 @@ class ConfigDao extends DatabaseAccessor<AppDatabase> with _$ConfigDaoMixin {
     final rows = await select(configTable).get();
     return {for (final row in rows) row.clave: row.valor};
   }
+
+  Future<String?> getConfig(String clave) => getValor(clave);
+
+  Future<void> setConfig(String clave, String valor) => setValor(clave, valor);
 }

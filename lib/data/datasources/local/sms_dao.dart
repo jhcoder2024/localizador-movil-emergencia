@@ -30,4 +30,9 @@ class SmsDao extends DatabaseAccessor<AppDatabase> with _$SmsDaoMixin {
           ..where((t) => t.leido.equals(false)))
         .write(const SmsMessagesTableCompanion(leido: Value(true)));
   }
+
+  Future<List<int>> getAllIds() async {
+    final rows = await select(smsMessagesTable).get();
+    return rows.map((r) => r.id).toList();
+  }
 }

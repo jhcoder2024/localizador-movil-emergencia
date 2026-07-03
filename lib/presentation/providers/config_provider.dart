@@ -6,30 +6,22 @@ import 'package:localizador_movil_emergencia/domain/repositories/contacto_reposi
 import 'package:localizador_movil_emergencia/domain/repositories/sms_repository.dart';
 import 'package:localizador_movil_emergencia/domain/usecases/guardar_configuracion_usecase.dart';
 import 'package:localizador_movil_emergencia/domain/usecases/obtener_configuracion_usecase.dart';
-import 'package:localizador_movil_emergencia/domain/usecases/obtener_contactos_usecase.dart';
-import 'package:localizador_movil_emergencia/domain/usecases/verificar_disponibilidad_canal_usecase.dart';
 
 class ConfigProvider extends ChangeNotifier {
-  final ObtenerContactosUseCase _obtenerContactos;
   final GuardarConfiguracionUseCase _guardarConfiguracion;
   final ObtenerConfiguracionUseCase _obtenerConfiguracion;
-  final VerificarDisponibilidadCanalUseCase _verificarCanales;
   final ContactoRepository _contactoRepository;
   final SmsRepository _smsRepository;
   StreamSubscription? _configSub;
   bool _esAppSmsDefault = false;
 
   ConfigProvider({
-    required ObtenerContactosUseCase obtenerContactos,
     required GuardarConfiguracionUseCase guardarConfiguracion,
     required ObtenerConfiguracionUseCase obtenerConfiguracion,
-    required VerificarDisponibilidadCanalUseCase verificarCanales,
     required ContactoRepository contactoRepository,
     required SmsRepository smsRepository,
-  })  : _obtenerContactos = obtenerContactos,
-        _guardarConfiguracion = guardarConfiguracion,
+  })  : _guardarConfiguracion = guardarConfiguracion,
         _obtenerConfiguracion = obtenerConfiguracion,
-        _verificarCanales = verificarCanales,
         _contactoRepository = contactoRepository,
         _smsRepository = smsRepository;
 

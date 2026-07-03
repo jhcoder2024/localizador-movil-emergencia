@@ -1,5 +1,4 @@
 import 'package:localizador_movil_emergencia/data/models/configuracion_model.dart';
-import 'package:localizador_movil_emergencia/data/models/contacto_model.dart';
 import 'package:localizador_movil_emergencia/data/mappers/contacto_mapper.dart';
 import 'package:localizador_movil_emergencia/domain/entities/configuracion.dart';
 

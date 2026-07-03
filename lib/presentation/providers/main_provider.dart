@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:localizador_movil_emergencia/core/utils/permission_utils.dart';
 import 'package:localizador_movil_emergencia/domain/entities/configuracion.dart';
 import 'package:localizador_movil_emergencia/domain/entities/estado_emergencia.dart';
@@ -15,8 +14,6 @@ import 'package:localizador_movil_emergencia/presentation/services/localizador_s
 import 'package:localizador_movil_emergencia/presentation/services/notification_service.dart';
 
 class MainProvider extends ChangeNotifier {
-  static const _channel = MethodChannel('com.example.localizador_movil_emergencia/sms');
-
   final ActivarEmergenciaUseCase _activarEmergencia;
   final CancelarEmergenciaUseCase _cancelarEmergencia;
   final EnviarUbicacionUseCase _enviarUbicacion;
