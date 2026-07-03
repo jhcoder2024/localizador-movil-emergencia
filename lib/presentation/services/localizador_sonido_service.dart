@@ -24,24 +24,21 @@ class LocalizadorSonidoService {
   static bool _usarFallback = false;
   static bool _assetVerificado = false;
 
-  static const int _intervaloPitidoSegundos = 5;
-  static const int _duracionTotalSegundos = 180; // 3 minutos
-
   /// Inicia el pitido intermitente.
-  /// Suena cada 5 segundos a máximo volumen durante 3 minutos.
+  /// Suena cada 5 segundos a máximo volumen.
+  /// [duracionSegundos]: duración del pitido (default: 180 = 3 minutos).
   /// Luego se detiene automáticamente para ahorrar batería.
-  static Future<void> iniciar() async {
+  static Future<void> iniciar({int duracionSegundos = 180}) async {
     if (_sonando) return;
     _sonando = true;
 
     if (!_assetVerificado) {
-      // Intentar cargar el archivo WAV
       try {
         await rootBundle.load('assets/sounds/baliza_alerta.wav');
         _player = AudioPlayer();
         await _player?.setAudioContext(_audioContext);
         await _player?.setSource(AssetSource('sounds/baliza_alerta.wav'));
-        _player?.setVolume(1.0); // Máximo volumen
+        _player?.setVolume(1.0);
         _player?.setReleaseMode(ReleaseMode.stop);
         debugPrint('[LocalizadorSonido] Usando archivo WAV');
       } catch (e) {
@@ -56,17 +53,17 @@ class LocalizadorSonidoService {
 
     // Pitidos cada 5 segundos
     _pitidoTimer = Timer.periodic(
-      const Duration(seconds: _intervaloPitidoSegundos),
+      const Duration(seconds: 5),
       (_) async {
         await _reproducirPitido();
       },
     );
 
-    // Auto-detener después de 3 minutos para ahorrar batería
+    // Auto-detener después de la duración especificada
     _duracionTimer = Timer(
-      const Duration(seconds: _duracionTotalSegundos),
+      Duration(seconds: duracionSegundos),
       () {
-        debugPrint('[LocalizadorSonido] Tiempo de pitido cumplido (3 min), deteniendo...');
+        debugPrint('[LocalizadorSonido] Tiempo de pitido cumplido (${duracionSegundos}s), deteniendo...');
         _detenerPitidos();
       },
     );
