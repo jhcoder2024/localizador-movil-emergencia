@@ -125,10 +125,6 @@ class MainProvider extends ChangeNotifier {
       NotificationService.onCancelEmergencia = () {
         cancelarEmergenciaActual();
       };
-      NotificationService.onNotificationTapped = () {
-        reintentarEnvio();
-      };
-
       // Mostrar notificación permanente
       try {
         await NotificationService.showEmergencyNotification(
@@ -162,34 +158,26 @@ class MainProvider extends ChangeNotifier {
     debugPrint('[MainProvider] Envíos periódicos cada ${_configuracion.intervaloMinutos} minuto(s)');
 
     _envioPeriodicoTimer = Timer.periodic(intervalo, (_) async {
-      final estado = await _emergencyRepository.obtenerEstado().first;
-      if (estado.activa && estado.tipo != null) {
+      // Usar _estado cacheado en lugar de obtenerEstado().first que se cuelga
+      if (_estado.activa && _estado.tipo != null) {
         debugPrint('[MainProvider] Enviando ubicación periódica...');
+        await _enviarUbicacion.call(_estado.tipo!);
 
-        // Intentar envío directo (por si la app ya es predeterminada)
-        await _enviarUbicacion.call(estado.tipo!);
-
-        // Actualizar notificación para que el usuario sepa que debe re-enviar
-        final diff = DateTime.now().difference(estado.inicioTimestamp!);
-        final tiempo = '${diff.inHours}h ${diff.inMinutes.remainder(60)}m';
-        try {
-          await NotificationService.updateNotificationTime(tiempo);
-        } catch (e) {
-          debugPrint('[MainProvider] Error actualizando notificación: $e');
+        // Actualizar tiempo en el estado
+        if (_estado.inicioTimestamp != null) {
+          final diff = DateTime.now().difference(_estado.inicioTimestamp!);
+          final tiempo = '${diff.inHours}h ${diff.inMinutes.remainder(60)}m';
+          try {
+            await NotificationService.updateNotificationTime(tiempo);
+          } catch (e) {
+            debugPrint('[MainProvider] Error actualizando notificación: $e');
+          }
         }
       } else {
         debugPrint('[MainProvider] Emergencia ya no activa, deteniendo envíos periódicos');
         _envioPeriodicoTimer?.cancel();
       }
     });
-  }
-
-  /// Reintenta el envío de SMS manualmente.
-  /// Se llama cuando el usuario vuelve a la app y hay una emergencia activa.
-  Future<void> reintentarEnvio() async {
-    if (!_estado.activa || _estado.tipo == null) return;
-    debugPrint('[MainProvider] Reintentando envío de SMS...');
-    await _enviarUbicacion.call(_estado.tipo!);
   }
 
   /// Obtiene el intervalo actual de envíos en minutos

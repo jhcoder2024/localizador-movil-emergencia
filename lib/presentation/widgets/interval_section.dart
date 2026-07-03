@@ -39,9 +39,9 @@ class IntervalSection extends StatelessWidget {
             const SizedBox(height: 8),
             Slider(
               value: valor.toDouble(),
-              min: 1,
+              min: 5,
               max: 30,
-              divisions: 29,
+              divisions: 25,
               label: '$valor minutos',
               activeColor: const Color(0xFFD32F2F),
               onChanged: (v) => onChanged(v.toInt()),
@@ -49,7 +49,7 @@ class IntervalSection extends StatelessWidget {
             const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('1 min', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                Text('5 min', style: TextStyle(color: Colors.grey, fontSize: 12)),
                 Text('30 min', style: TextStyle(color: Colors.grey, fontSize: 12)),
               ],
             ),

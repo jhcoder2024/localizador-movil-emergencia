@@ -81,19 +81,7 @@ class _MainScreenState extends State<MainScreen> {
                             ),
                             textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: () => provider.reintentarEnvio(),
-                              icon: const Icon(Icons.refresh, size: 18),
-                              label: const Text('RE-ENVIAR SMS AHORA'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFF9800),
-                                foregroundColor: Colors.white,
-                              ),
-                            ),
-                          ),
+
                         ],
                       ),
                     ),
