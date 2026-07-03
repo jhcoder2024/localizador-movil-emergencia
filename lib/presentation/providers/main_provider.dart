@@ -112,7 +112,9 @@ class MainProvider extends ChangeNotifier {
 
     try {
       await _activarEmergencia.call(_tipoPendiente!);
-      LocalizadorSonidoService.iniciar();
+      // Primer sonido con duración = mitad del intervalo
+      final duracionSonido = (_configuracion.intervaloMinutos * 60) ~/ 2;
+      LocalizadorSonidoService.iniciar(duracionSegundos: duracionSonido);
 
       // Iniciar foreground service para mantener la app en segundo plano
       try {
@@ -162,6 +164,11 @@ class MainProvider extends ChangeNotifier {
       if (_estado.activa && _estado.tipo != null) {
         debugPrint('[MainProvider] Enviando ubicación periódica...');
         await _enviarUbicacion.call(_estado.tipo!);
+
+        // Reiniciar sonido con duración = mitad del intervalo
+        final duracionSonido = (_configuracion.intervaloMinutos * 60) ~/ 2;
+        LocalizadorSonidoService.iniciar(duracionSegundos: duracionSonido);
+        debugPrint('[MainProvider] Sonido reactivado por ${duracionSonido}s');
 
         // Actualizar tiempo en el estado
         if (_estado.inicioTimestamp != null) {
