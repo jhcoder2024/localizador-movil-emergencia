@@ -37,12 +37,23 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
                 }
             }
             "SMS_SENT" -> {
-                when (resultCode) {
-                    android.app.Activity.RESULT_OK ->
-                        Log.i("[SmsRepository]", "SMS: Enviado correctamente")
-                    else ->
-                        Log.w("[SmsRepository]", "SMS: Error al enviar (código: $resultCode)")
+                val smsId = intent.getIntExtra("sms_id", -1)
+                val resultado = when (resultCode) {
+                    android.app.Activity.RESULT_OK -> "sent"
+                    else -> "failed"
                 }
+                Log.i("[SmsRepository]", "SMS $smsId: $resultado")
+
+                // Enviar resultado a Flutter
+                val resultData = mapOf(
+                    "type" to "sms_sent_result",
+                    "smsId" to smsId,
+                    "estado" to resultado
+                )
+                val localIntent = Intent("SMS_RECEIVED_INTERNAL").apply {
+                    putExtra("sms_data", HashMap(resultData))
+                }
+                context.sendBroadcast(localIntent)
             }
             "SMS_DELIVERED" -> {
                 when (resultCode) {

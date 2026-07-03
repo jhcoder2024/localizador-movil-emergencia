@@ -37,6 +37,7 @@ class SmsMappers {
       tipo: row.tipo == 1 ? MensajeType.received : MensajeType.sent,
       leido: row.leido,
       tieneMms: row.tieneMms,
+      estadoEnvio: row.estadoEnvio,
     );
   }
 
@@ -50,6 +51,7 @@ class SmsMappers {
       tipo: Value(m.tipo == MensajeType.received ? 1 : 2),
       leido: Value(m.leido),
       tieneMms: Value(m.tieneMms),
+      estadoEnvio: Value(m.estadoEnvio),
     );
   }
 }
