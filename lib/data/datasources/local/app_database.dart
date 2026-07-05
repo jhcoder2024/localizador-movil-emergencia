@@ -33,6 +33,7 @@ class ConversationsTable extends Table {
   TextColumn get ultimoMensaje => text()();
   IntColumn get ultimaFecha => integer()();
   IntColumn get noLeidos => integer().withDefault(const Constant(0))();
+  BoolColumn get isArchived => boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -59,7 +60,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -73,6 +74,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 3) {
         await m.addColumn(smsMessagesTable, smsMessagesTable.estadoEnvio);
+      }
+      if (from < 4) {
+        await m.addColumn(conversationsTable, conversationsTable.isArchived);
       }
     },
   );

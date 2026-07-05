@@ -45,7 +45,7 @@ class _ContactPickerDialogState extends State<ContactPickerDialog> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.contacts_outlined, size: 48, color: Colors.grey[400]),
+            Icon(Icons.contacts_outlined, size: 48, color: Theme.of(context).disabledColor),
             const SizedBox(height: 16),
             Text(
               _busqueda.isEmpty
@@ -92,7 +92,7 @@ class _ContactPickerDialogState extends State<ContactPickerDialog> {
           height: MediaQuery.of(context).size.height * 0.7,
           margin: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
@@ -101,11 +101,12 @@ class _ContactPickerDialogState extends State<ContactPickerDialog> {
                 padding: const EdgeInsets.fromLTRB(16, 16, 8, 0),
                 child: Row(
                   children: [
-                    const Text(
+                    Text(
                       'Seleccionar contacto',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const Spacer(),

@@ -26,6 +26,18 @@ class InboxProvider extends ChangeNotifier {
     });
   }
 
+  Future<void> archiveConversation(String id) async {
+    await _smsInboxRepository.archiveConversation(id, true);
+  }
+
+  Future<void> deleteConversation(String id) async {
+    await _smsInboxRepository.deleteConversation(id);
+  }
+
+  Stream<List<Conversation>> watchArchivedConversations() {
+    return _smsInboxRepository.watchArchivedConversations();
+  }
+
   @override
   void dispose() {
     _conversationsSub?.cancel();
