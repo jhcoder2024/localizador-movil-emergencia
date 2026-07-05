@@ -47,10 +47,12 @@ class BackupService {
       final file = File('${dir.path}/localizador_backup.json');
       await file.writeAsString(jsonString);
 
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        subject: 'Copia de seguridad - Localizador Móvil',
-        text: 'Copia de seguridad de mensajes',
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          subject: 'Copia de seguridad - Localizador Móvil',
+          text: 'Copia de seguridad de mensajes',
+        ),
       );
     } catch (e) {
       debugPrint('[Backup] Error exportando: $e');

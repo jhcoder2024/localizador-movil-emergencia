@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:localizador_movil_emergencia/domain/entities/coordenadas.dart';
 import 'package:localizador_movil_emergencia/domain/entities/configuracion.dart';
 import 'package:localizador_movil_emergencia/domain/entities/contacto_emergencia.dart';
+import 'package:localizador_movil_emergencia/domain/entities/conversation.dart';
+import 'package:localizador_movil_emergencia/domain/entities/sms_message.dart';
 import 'package:localizador_movil_emergencia/domain/entities/tipo_emergencia.dart';
 import 'package:localizador_movil_emergencia/domain/usecases/enviar_ubicacion_usecase.dart';
 import 'package:localizador_movil_emergencia/domain/repositories/location_repository.dart';
@@ -19,6 +21,27 @@ class MockSmsRepository extends Mock implements SmsRepository {}
 class MockSmsInboxRepository extends Mock implements SmsInboxRepository {}
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(Coordenadas(latitud: 0, longitud: 0, timestamp: DateTime.now()));
+    registerFallbackValue(SmsMessage(
+      conversationId: '',
+      remitente: '',
+      telefono: '',
+      cuerpo: '',
+      fecha: DateTime.now(),
+      tipo: MensajeType.sent,
+      leido: false,
+    ));
+    registerFallbackValue(Conversation(
+      id: '',
+      remitente: '',
+      telefono: '',
+      ultimoMensaje: '',
+      ultimaFecha: DateTime.now(),
+      noLeidos: 0,
+    ));
+  });
+
   late EnviarUbicacionUseCase useCase;
   late MockLocationRepository mockLocation;
   late MockEmergencyRepository mockEmergency;
@@ -66,7 +89,9 @@ void main() {
         .thenAnswer((_) => Stream.value(testConfig));
     when(() => mockSms.enviarSms(any(), any()))
         .thenAnswer((_) async => true);
-    when(() => mockConfig.guardarConfiguracion(any()))
+    when(() => mockSmsInbox.insertMessage(any()))
+        .thenAnswer((_) async {});
+    when(() => mockSmsInbox.upsertConversation(any()))
         .thenAnswer((_) async {});
 
     await useCase(TipoEmergencia.extraviado);
@@ -85,7 +110,9 @@ void main() {
         .thenAnswer((_) => Stream.value(testConfig));
     when(() => mockSms.enviarSms(any(), any()))
         .thenAnswer((_) async => false);
-    when(() => mockConfig.guardarConfiguracion(any()))
+    when(() => mockSmsInbox.insertMessage(any()))
+        .thenAnswer((_) async {});
+    when(() => mockSmsInbox.upsertConversation(any()))
         .thenAnswer((_) async {});
 
     await useCase(TipoEmergencia.extraviado);

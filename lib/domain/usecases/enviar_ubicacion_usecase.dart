@@ -7,7 +7,6 @@ import 'package:localizador_movil_emergencia/domain/repositories/sms_repository.
 import 'package:localizador_movil_emergencia/domain/repositories/sms_inbox_repository.dart';
 import 'package:localizador_movil_emergencia/domain/entities/sms_message.dart';
 import 'package:localizador_movil_emergencia/domain/entities/conversation.dart';
-import 'package:localizador_movil_emergencia/domain/entities/configuracion.dart';
 
 class EnviarUbicacionUseCase {
   final LocationRepository _locationRepository;
