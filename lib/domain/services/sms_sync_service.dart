@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:localizador_movil_emergencia/data/datasources/local/app_database.dart';
+import 'package:localizador_movil_emergencia/data/datasources/local/mms_cache_manager.dart';
 import 'package:localizador_movil_emergencia/data/datasources/remote/sms_content_provider_datasource.dart';
 import 'package:localizador_movil_emergencia/data/datasources/local/sms_dao.dart';
 import 'package:localizador_movil_emergencia/data/datasources/local/conversation_dao.dart';
@@ -24,9 +26,11 @@ class SmsSyncService {
   Future<int> syncAll() async {
     debugPrint('[SmsSync] Iniciando sincronización completa...');
     final smsList = await _contentProvider.getAllSms();
-    final count = await _processSmsBatch(smsList);
+    final mmsList = await _contentProvider.getAllMms();
 
-    // Actualizar timestamp para futuras sincronizaciones incrementales
+    final allMessages = [...smsList, ...mmsList];
+    final count = await _processSmsBatch(allMessages);
+
     await _configDao.setConfig(_lastSyncKey, DateTime.now().millisecondsSinceEpoch.toString());
 
     return count;
@@ -71,25 +75,61 @@ class SmsSyncService {
     } catch (_) {}
 
     for (final sms in smsList) {
+      final isMms = sms.containsKey('parts');
       final smsId = sms['id'] as int;
-      
-      // Evitar duplicados
+
       if (existingIds.contains(smsId)) continue;
       existingIds.add(smsId);
 
       final address = (sms['address'] as String?)?.trim() ?? '';
-      final body = (sms['body'] as String?) ?? '';
-      final date = (sms['date'] as int?) ?? 0;
-      final type = (sms['type'] as int?) ?? 1;
-      final isRead = (sms['read'] as int?) == 1;
-
       if (address.isEmpty) continue;
 
-      // Normalizar teléfono
+      String body;
+      bool tieneMms;
+      int date;
+      int type;
+      bool isRead;
+
+      if (isMms) {
+        date = (sms['date'] as int?) ?? 0;
+        type = (sms['type'] as int?) ?? 1;
+        isRead = (sms['read'] as int?) == 1;
+        tieneMms = true;
+
+        final subject = (sms['sub'] as String?) ?? '';
+        body = subject;
+
+        final parts = (sms['parts'] as List<dynamic>?) ?? [];
+        int imgIndex = 0;
+        for (final part in parts) {
+          if (part is Map) {
+            final partType = part['type'] as String?;
+            if (partType == 'text') {
+              final text = part['text'] as String?;
+              if (text != null && text.isNotEmpty) {
+                body = text;
+              }
+            } else if (partType == 'image') {
+              final data = part['data'] as String?;
+              final contentType = part['contentType'] as String? ?? 'image/jpeg';
+              if (data != null) {
+                await MmsCacheManager.saveImage(smsId, imgIndex, data, contentType);
+                imgIndex++;
+              }
+            }
+          }
+        }
+      } else {
+        body = (sms['body'] as String?) ?? '';
+        date = (sms['date'] as int?) ?? 0;
+        type = (sms['type'] as int?) ?? 1;
+        isRead = (sms['read'] as int?) == 1;
+        tieneMms = false;
+      }
+
       final normalizedAddress = address.replaceAll(RegExp(r'[^\d+]'), '');
       final conversationId = normalizedAddress;
 
-      // Actualizar conversación
       if (!conversations.containsKey(conversationId)) {
         conversations[conversationId] = {
           'id': conversationId,
@@ -119,7 +159,7 @@ class SmsSyncService {
         fecha: Value(date),
         tipo: Value(type == 2 ? 2 : 1),
         leido: Value(isRead),
-        tieneMms: const Value(false),
+        tieneMms: Value(tieneMms),
       ));
     }
 

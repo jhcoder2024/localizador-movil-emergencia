@@ -40,6 +40,22 @@ class SmsContentProviderDataSource {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getAllMms() async {
+    try {
+      final result = await _syncChannel.invokeMethod<List<dynamic>>('getAllMms');
+      if (result == null) return [];
+      return result.map((item) {
+        if (item is Map) {
+          return item.map((key, value) => MapEntry(key.toString(), value));
+        }
+        return <String, dynamic>{};
+      }).toList();
+    } catch (e) {
+      debugPrint('[MmsDataSource] Error getAllMms: $e');
+      return [];
+    }
+  }
+
   Future<bool> markAsReadInSystem(String conversationId) async {
     try {
       final result = await _syncChannel.invokeMethod<bool>('markAsReadInSystem', {

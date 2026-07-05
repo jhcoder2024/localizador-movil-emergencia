@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
+import 'package:localizador_movil_emergencia/data/datasources/local/mms_cache_manager.dart';
 import 'package:localizador_movil_emergencia/domain/entities/sms_message.dart';
 import 'package:localizador_movil_emergencia/presentation/providers/conversation_provider.dart';
 import 'package:localizador_movil_emergencia/app/di/presentation_module.dart';
@@ -174,13 +176,16 @@ class _ConversationScreenState extends State<ConversationScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(
-              msg.cuerpo,
-              style: TextStyle(
-                fontSize: 15,
-                color: isSent ? Colors.white : Colors.black87,
+            if (msg.tieneMms)
+              _buildMmsImageContent(msg, isSent)
+            else
+              Text(
+                msg.cuerpo,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: isSent ? Colors.white : Colors.black87,
+                ),
               ),
-            ),
             const SizedBox(height: 4),
             Row(
               mainAxisSize: MainAxisSize.min,
@@ -211,6 +216,54 @@ class _ConversationScreenState extends State<ConversationScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildMmsImageContent(SmsMessage msg, bool isSent) {
+    return FutureBuilder<List<File>>(
+      future: MmsCacheManager.getImages(msg.id ?? 0),
+      builder: (context, snapshot) {
+        final images = snapshot.data ?? [];
+        final hasImages = images.isNotEmpty;
+        final hasText = msg.cuerpo.isNotEmpty;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            if (hasImages)
+              ...images.map((file) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    file,
+                    fit: BoxFit.contain,
+                    width: double.infinity,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, size: 48),
+                  ),
+                ),
+              )),
+            if (hasImages && hasText) const SizedBox(height: 4),
+            if (hasText)
+              Text(
+                msg.cuerpo,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: isSent ? Colors.white : Colors.black87,
+                ),
+              ),
+            if (!hasImages && !hasText)
+              Text(
+                '(MMS)',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontStyle: FontStyle.italic,
+                  color: isSent ? Colors.white70 : Colors.grey[500],
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 

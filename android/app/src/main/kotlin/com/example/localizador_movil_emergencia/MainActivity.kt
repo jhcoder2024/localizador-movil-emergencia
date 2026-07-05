@@ -70,6 +70,9 @@ class MainActivity : FlutterActivity() {
                     val sinceTimestamp = call.argument<Long>("sinceTimestamp") ?: 0L
                     getNewSms(sinceTimestamp, result)
                 }
+                "getAllMms" -> {
+                    getAllMms(result)
+                }
                 "markAsReadInSystem" -> {
                     val conversationId = call.argument<String>("conversationId") ?: ""
                     markAsReadInSystem(conversationId, result)
@@ -79,6 +82,11 @@ class MainActivity : FlutterActivity() {
                     val mensaje = call.argument<String>("mensaje") ?: ""
                     val smsId = call.argument<Int>("smsId") ?: 0
                     sendSmsFromInbox(telefono, mensaje, smsId, result)
+                }
+                "sendMms" -> {
+                    val telefono = call.argument<String>("telefono") ?: ""
+                    val imagePath = call.argument<String>("imagePath") ?: ""
+                    sendMms(telefono, imagePath, result)
                 }
                 else -> result.notImplemented()
             }
@@ -342,6 +350,128 @@ class MainActivity : FlutterActivity() {
         } catch (e: Exception) {
             android.util.Log.e("[SmsInbox]", "Error sendSmsFromInbox", e)
             result.success(mapOf("exito" to false, "error" to e.message))
+        }
+    }
+
+    private fun getAllMms(result: MethodChannel.Result) {
+        try {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_SMS)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                result.success(emptyList<Any>())
+                return
+            }
+
+            val mmsList = mutableListOf<Map<String, Any?>>()
+
+            val mmsCursor = contentResolver.query(
+                Uri.parse("content://mms"),
+                arrayOf("_id", "date", "read", "sub", "msg_box"),
+                null, null, null
+            )
+
+            mmsCursor?.use { cursor ->
+                while (cursor.moveToNext()) {
+                    val mmsId = cursor.getLong(cursor.getColumnIndexOrThrow("_id"))
+                    val date = cursor.getLong(cursor.getColumnIndexOrThrow("date")) * 1000L
+                    val read = cursor.getInt(cursor.getColumnIndexOrThrow("read"))
+                    val sub = cursor.getString(cursor.getColumnIndexOrThrow("sub")) ?: ""
+                    val msgBox = cursor.getInt(cursor.getColumnIndexOrThrow("msg_box"))
+
+                    var address = ""
+                    val addrCursor = contentResolver.query(
+                        Uri.parse("content://mms/$mmsId/addr"),
+                        null, null, null, null
+                    )
+                    addrCursor?.use { addr ->
+                        while (addr.moveToNext()) {
+                            if (addr.getString(addr.getColumnIndexOrThrow("type")) == "151") {
+                                address = addr.getString(addr.getColumnIndexOrThrow("address")) ?: ""
+                            }
+                        }
+                    }
+
+                    val parts = mutableListOf<Map<String, Any?>>()
+                    val partCursor = contentResolver.query(
+                        Uri.parse("content://mms/part/$mmsId"),
+                        null, null, null, null
+                    )
+
+                    partCursor?.use { partsCursor ->
+                        while (partsCursor.moveToNext()) {
+                            val partId = partsCursor.getLong(partsCursor.getColumnIndexOrThrow("_id"))
+                            val contentType = partsCursor.getString(partsCursor.getColumnIndexOrThrow("ct")) ?: ""
+                            val dataPath = partsCursor.getString(partsCursor.getColumnIndexOrThrow("_data"))
+                            val text = partsCursor.getString(partsCursor.getColumnIndexOrThrow("text"))
+
+                            if (contentType.startsWith("image/")) {
+                                var imageBytes: ByteArray? = null
+                                if (dataPath != null) {
+                                    try {
+                                        imageBytes = java.io.File(dataPath).readBytes()
+                                    } catch (e: Exception) {}
+                                }
+                                if (imageBytes == null) {
+                                    try {
+                                        val uri = Uri.parse("content://mms/part/$partId")
+                                        imageBytes = contentResolver.openInputStream(uri)?.readBytes()
+                                    } catch (e: Exception) {}
+                                }
+
+                                if (imageBytes != null) {
+                                    val base64Image = android.util.Base64.encodeToString(imageBytes, android.util.Base64.NO_WRAP)
+                                    parts.add(mapOf(
+                                        "type" to "image",
+                                        "contentType" to contentType,
+                                        "data" to base64Image
+                                    ))
+                                }
+                            } else if (contentType.startsWith("text/") && text != null) {
+                                parts.add(mapOf(
+                                    "type" to "text",
+                                    "contentType" to contentType,
+                                    "text" to text
+                                ))
+                            }
+                        }
+                    }
+
+                    if (address.isNotEmpty() && parts.isNotEmpty()) {
+                        mmsList.add(mapOf(
+                            "id" to mmsId,
+                            "address" to address,
+                            "date" to date,
+                            "read" to read,
+                            "sub" to sub,
+                            "type" to if (msgBox == 1) 1 else 2,
+                            "parts" to parts
+                        ))
+                    }
+                }
+            }
+
+            result.success(mmsList)
+        } catch (e: Exception) {
+            android.util.Log.e("[MmsSync]", "Error getAllMms", e)
+            result.success(emptyList<Any>())
+        }
+    }
+
+    private fun sendMms(telefono: String, imagePath: String, result: MethodChannel.Result) {
+        try {
+            val imageUri = Uri.parse(imagePath)
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = if (imagePath.endsWith(".png", true)) "image/png" else "image/jpeg"
+                putExtra(Intent.EXTRA_STREAM, imageUri)
+                putExtra("address", telefono)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(intent, "Enviar MMS"))
+            result.success(true)
+        } catch (e: Exception) {
+            android.util.Log.e("[MmsSync]", "Error sendMms", e)
+            result.success(false)
         }
     }
 
