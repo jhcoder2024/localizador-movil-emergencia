@@ -52,6 +52,11 @@ class LocalizadorEmergenciaApp extends StatelessWidget {
         ),
         GoRoute(
           path: '/conversation/:id',
+          redirect: (context, state) {
+            final id = state.pathParameters['id'] ?? '';
+            if (id.isEmpty) return '/';
+            return null;
+          },
           builder: (context, state) => ConversationScreen(
             conversationId: state.pathParameters['id']!,
           ),

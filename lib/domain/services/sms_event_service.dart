@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:localizador_movil_emergencia/data/datasources/local/app_database.dart';
 import 'package:localizador_movil_emergencia/data/datasources/local/sms_dao.dart';
 import 'package:localizador_movil_emergencia/data/datasources/local/conversation_dao.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:drift/drift.dart';
 
 class SmsEventService {
@@ -72,8 +73,41 @@ class SmsEventService {
       // Por ahora, el upsert reemplaza noLeidos con 1 si no existe
 
       debugPrint('[SmsEvent] SMS almacenado de $address');
+
+      // Mostrar notificación con acción "Responder"
+      try {
+        await _showSmsNotification(address, body, conversationId);
+      } catch (e) {
+        debugPrint('[SmsEvent] Error mostrando notificación: $e');
+      }
     } catch (e) {
       debugPrint('[SmsEvent] Error procesando SMS: $e');
     }
+  }
+
+  Future<void> _showSmsNotification(String sender, String body, String conversationId) async {
+    final plugin = FlutterLocalNotificationsPlugin();
+
+    final reenviarAction = AndroidNotificationAction(
+      'abrir_conversacion',
+      'Responder',
+      showsUserInterface: true,
+    );
+
+    await plugin.show(
+      conversationId.hashCode,
+      sender,
+      body.length > 100 ? '${body.substring(0, 100)}...' : body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          'localizador_channel',
+          'Localizador',
+          importance: Importance.high,
+          priority: Priority.high,
+          actions: [reenviarAction],
+        ),
+      ),
+      payload: conversationId,
+    );
   }
 }

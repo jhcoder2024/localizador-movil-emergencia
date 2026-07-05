@@ -5,7 +5,6 @@ import 'package:localizador_movil_emergencia/presentation/providers/config_provi
 import 'package:localizador_movil_emergencia/presentation/providers/inbox_provider.dart';
 import 'package:localizador_movil_emergencia/presentation/providers/search_provider.dart';
 import 'package:localizador_movil_emergencia/presentation/providers/theme_provider.dart';
-
 final getIt = GetIt.instance;
 
 void initPresentationModule() {
