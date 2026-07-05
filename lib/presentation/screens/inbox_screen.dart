@@ -64,6 +64,11 @@ class _InboxScreenState extends State<InboxScreen> {
                 },
               ),
               IconButton(
+                icon: const Icon(Icons.block),
+                tooltip: 'Bloqueados',
+                onPressed: () => context.push('/blocked'),
+              ),
+              IconButton(
                 icon: const Icon(Icons.settings),
                 onPressed: () => context.push('/config'),
               ),
@@ -256,6 +261,14 @@ class _InboxScreenState extends State<InboxScreen> {
               },
             ),
             ListTile(
+              leading: const Icon(Icons.block, color: Colors.red),
+              title: const Text('Bloquear', style: TextStyle(color: Colors.red)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _confirmarBloqueo(context, provider, conv);
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.delete, color: Colors.red),
               title: const Text('Eliminar', style: TextStyle(color: Colors.red)),
               onTap: () {
@@ -287,6 +300,30 @@ class _InboxScreenState extends State<InboxScreen> {
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmarBloqueo(BuildContext context, InboxProvider provider, Conversation conv) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Bloquear número'),
+        content: Text('¿Bloquear ${conv.telefono}? No recibirás más mensajes de este número.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              provider.blockNumber(conv.telefono);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Bloquear'),
           ),
         ],
       ),

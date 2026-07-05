@@ -8,6 +8,7 @@ import 'package:localizador_movil_emergencia/presentation/screens/config_screen.
 import 'package:localizador_movil_emergencia/presentation/screens/permissions_screen.dart';
 import 'package:localizador_movil_emergencia/presentation/screens/splash_screen.dart';
 import 'package:localizador_movil_emergencia/presentation/screens/conversation_screen.dart';
+import 'package:localizador_movil_emergencia/presentation/screens/blocked_numbers_screen.dart';
 import 'package:localizador_movil_emergencia/core/theme/app_theme.dart';
 import 'package:localizador_movil_emergencia/presentation/services/notification_service.dart';
 import 'package:localizador_movil_emergencia/presentation/providers/theme_provider.dart';
@@ -75,6 +76,10 @@ class LocalizadorEmergenciaApp extends StatelessWidget {
                   child: child,
                 ),
           ),
+        ),
+        GoRoute(
+          path: '/blocked',
+          builder: (context, state) => const BlockedNumbersScreen(),
         ),
         GoRoute(
           path: '/permissions',

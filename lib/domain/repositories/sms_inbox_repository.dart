@@ -12,4 +12,9 @@ abstract class SmsInboxRepository {
   Future<void> upsertConversation(Conversation conversation);
   Future<void> archiveConversation(String conversationId, bool archived);
   Future<void> deleteConversation(String conversationId);
+
+  Future<bool> isNumberBlocked(String phoneNumber);
+  Future<void> blockNumber(String phoneNumber);
+  Future<void> unblockNumber(String phoneNumber);
+  Stream<List<Conversation>> watchBlockedNumbers();
 }

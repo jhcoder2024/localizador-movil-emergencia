@@ -55,12 +55,20 @@ class SmsMessagesTable extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-@DriftDatabase(tables: [ContactosTable, ConfigTable, ConversationsTable, SmsMessagesTable])
+class BlockedNumbersTable extends Table {
+  TextColumn get id => text()();
+  IntColumn get bloqueadoEn => integer()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DriftDatabase(tables: [ContactosTable, ConfigTable, ConversationsTable, SmsMessagesTable, BlockedNumbersTable])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -78,7 +86,9 @@ class AppDatabase extends _$AppDatabase {
       if (from < 4) {
         await m.addColumn(conversationsTable, conversationsTable.isArchived);
       }
-
+      if (from < 5) {
+        await m.createTable(blockedNumbersTable);
+      }
     },
   );
 
