@@ -74,6 +74,9 @@ dependencies:
   # Emoji picker
   emoji_picker_flutter: ^4.4.0
 
+  # Image picker (MMS)
+  image_picker: ^1.0.0
+
   # Android widgets
   home_widget: ^0.7.0
 
