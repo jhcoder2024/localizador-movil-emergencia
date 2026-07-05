@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:localizador_movil_emergencia/data/datasources/local/app_database.dart';
+import 'package:localizador_movil_emergencia/data/datasources/local/blocked_number_dao.dart';
 import 'package:localizador_movil_emergencia/data/datasources/local/sms_dao.dart';
 import 'package:localizador_movil_emergencia/data/datasources/local/conversation_dao.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -12,9 +13,10 @@ class SmsEventService {
   
   final SmsDao _smsDao;
   final ConversationDao _conversationDao;
+  final BlockedNumberDao _blockedNumberDao;
   StreamSubscription? _subscription;
 
-  SmsEventService(this._smsDao, this._conversationDao);
+  SmsEventService(this._smsDao, this._conversationDao, this._blockedNumberDao);
 
   void startListening() {
     _subscription?.cancel();
@@ -45,6 +47,11 @@ class SmsEventService {
       if (address.isEmpty) return;
 
       final conversationId = address.replaceAll(RegExp(r'[^\d+]'), '');
+
+      if (await _blockedNumberDao.isBlocked(conversationId)) {
+        debugPrint('[SmsEvent] SMS bloqueado de $address');
+        return;
+      }
 
       // Insertar mensaje
       await _smsDao.insertMessage(SmsMessagesTableCompanion(

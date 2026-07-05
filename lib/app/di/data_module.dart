@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:get_it/get_it.dart';
 import 'package:localizador_movil_emergencia/data/datasources/local/app_database.dart';
+import 'package:localizador_movil_emergencia/data/datasources/local/blocked_number_dao.dart';
 import 'package:localizador_movil_emergencia/data/datasources/local/config_dao.dart';
 import 'package:localizador_movil_emergencia/data/datasources/local/contacts_dao.dart';
 import 'package:localizador_movil_emergencia/data/datasources/local/conversation_dao.dart';
@@ -24,6 +25,7 @@ import 'package:localizador_movil_emergencia/domain/repositories/sms_inbox_repos
 import 'package:localizador_movil_emergencia/domain/repositories/sms_repository.dart';
 import 'package:localizador_movil_emergencia/domain/services/sms_sync_service.dart';
 import 'package:localizador_movil_emergencia/domain/services/sms_event_service.dart';
+import 'package:localizador_movil_emergencia/domain/services/backup_service.dart';
 
 final getIt = GetIt.instance;
 
@@ -55,6 +57,7 @@ Future<void> initDataModule() async {
   getIt.registerLazySingleton<ContactsDao>(() => ContactsDao(database));
   getIt.registerLazySingleton<SmsDao>(() => SmsDao(database));
   getIt.registerLazySingleton<ConversationDao>(() => ConversationDao(database));
+  getIt.registerLazySingleton<BlockedNumberDao>(() => BlockedNumberDao(database));
   // Repositories
   getIt.registerLazySingleton<ContactoRepository>(
     () => ContactoRepositoryImpl(getIt<ContactsDao>()),
@@ -76,7 +79,7 @@ Future<void> initDataModule() async {
     () => EmergencyRepositoryImpl(),
   );
   getIt.registerLazySingleton<SmsInboxRepository>(
-    () => SmsInboxRepositoryImpl(getIt<ConversationDao>(), getIt<SmsDao>()),
+    () => SmsInboxRepositoryImpl(getIt<ConversationDao>(), getIt<SmsDao>(), getIt<BlockedNumberDao>()),
   );
   // SMS Sync & Event services
   getIt.registerLazySingleton<SmsContentProviderDataSource>(
@@ -94,6 +97,10 @@ Future<void> initDataModule() async {
     () => SmsEventService(
       getIt<SmsDao>(),
       getIt<ConversationDao>(),
+      getIt<BlockedNumberDao>(),
     ),
+  );
+  getIt.registerLazySingleton<BackupService>(
+    () => BackupService(getIt<SmsInboxRepository>()),
   );
 }
