@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:localizador_movil_emergencia/data/datasources/local/app_database.dart';
 import 'package:localizador_movil_emergencia/data/datasources/local/mms_cache_manager.dart';
