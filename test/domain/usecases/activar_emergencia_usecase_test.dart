@@ -13,6 +13,10 @@ class MockEmergencyRepository extends Mock implements EmergencyRepository {}
 class MockConfigRepository extends Mock implements ConfigRepository {}
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(TipoEmergencia.extraviado);
+  });
+
   late ActivarEmergenciaUseCase useCase;
   late MockEmergencyRepository mockEmergencyRepository;
   late MockConfigRepository mockConfigRepository;
@@ -51,7 +55,7 @@ void main() {
         .thenAnswer((_) => Stream.value(configInvalida));
 
     expect(
-      () => useCase(TipoEmergencia.extraviado),
+      useCase(TipoEmergencia.extraviado),
       throwsException,
     );
   });
@@ -61,7 +65,7 @@ void main() {
         .thenAnswer((_) => Stream.value(const Configuracion()));
 
     expect(
-      () => useCase(TipoEmergencia.extraviado),
+      useCase(TipoEmergencia.extraviado),
       throwsException,
     );
   });
@@ -73,7 +77,7 @@ void main() {
         .thenThrow(Exception('Error de prueba'));
 
     expect(
-      () => useCase(TipoEmergencia.extraviado),
+      useCase(TipoEmergencia.extraviado),
       throwsException,
     );
   });

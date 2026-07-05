@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:localizador_movil_emergencia/presentation/providers/main_provider.dart';
@@ -10,6 +11,7 @@ import 'package:localizador_movil_emergencia/domain/repositories/emergency_repos
 import 'package:localizador_movil_emergencia/domain/entities/estado_emergencia.dart';
 import 'package:localizador_movil_emergencia/domain/entities/configuracion.dart';
 import 'package:localizador_movil_emergencia/domain/entities/tipo_emergencia.dart';
+import 'package:localizador_movil_emergencia/presentation/services/localizador_sonido_service.dart';
 
 class MockActivarEmergencia extends Mock implements ActivarEmergenciaUseCase {}
 class MockCancelarEmergencia extends Mock implements CancelarEmergenciaUseCase {}
@@ -18,6 +20,24 @@ class MockObtenerConfiguracion extends Mock implements ObtenerConfiguracionUseCa
 class MockEmergencyRepository extends Mock implements EmergencyRepository {}
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() {
+    registerFallbackValue(TipoEmergencia.extraviado);
+
+    // Mock audio player channel to prevent MissingPluginException
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('xyz.luan/audioplayers.global'),
+      (MethodCall methodCall) async => null,
+    );
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('xyz.luan/audioplayers'),
+      (MethodCall methodCall) async => 1,
+    );
+  });
+
   late MainProvider provider;
   late MockActivarEmergencia mockActivar;
   late MockCancelarEmergencia mockCancelar;
@@ -44,6 +64,12 @@ void main() {
       obtenerConfiguracion: mockObtenerConfig,
       emergencyRepository: mockEmergencyRepo,
     );
+  });
+
+  tearDown(() async {
+    try {
+      await LocalizadorSonidoService.detener();
+    } catch (_) {}
   });
 
   test('estado inicial debe ser inactiva', () {
@@ -80,7 +106,7 @@ void main() {
     verify(() => mockEnviar.call(TipoEmergencia.extraviado)).called(1);
     expect(provider.autoEjecutando, isFalse);
     expect(provider.cargando, isFalse);
-  });
+  }, timeout: const Timeout(Duration(seconds: 5)));
 
   test('confirmarEmergencia maneja errores correctamente', () async {
     when(() => mockActivar.call(any()))
