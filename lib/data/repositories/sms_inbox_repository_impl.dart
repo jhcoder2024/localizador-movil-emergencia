@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:localizador_movil_emergencia/data/datasources/local/app_database.dart';
+import 'package:localizador_movil_emergencia/data/datasources/local/blocked_number_dao.dart';
 import 'package:localizador_movil_emergencia/data/datasources/local/conversation_dao.dart';
 import 'package:localizador_movil_emergencia/data/datasources/local/sms_dao.dart';
 import 'package:localizador_movil_emergencia/data/mappers/sms_mappers.dart';
@@ -10,12 +11,20 @@ import 'package:localizador_movil_emergencia/domain/repositories/sms_inbox_repos
 class SmsInboxRepositoryImpl implements SmsInboxRepository {
   final ConversationDao _conversationDao;
   final SmsDao _smsDao;
+  final BlockedNumberDao _blockedNumberDao;
 
-  SmsInboxRepositoryImpl(this._conversationDao, this._smsDao);
+  SmsInboxRepositoryImpl(this._conversationDao, this._smsDao, this._blockedNumberDao);
 
   @override
   Stream<List<Conversation>> watchConversations() {
-    return _conversationDao.watchConversations().map(
+    return _conversationDao.watchActiveConversations().map(
+      (rows) => rows.map(SmsMappers.fromConversationTable).toList(),
+    );
+  }
+
+  @override
+  Stream<List<Conversation>> watchArchivedConversations() {
+    return _conversationDao.watchArchivedConversations().map(
       (rows) => rows.map(SmsMappers.fromConversationTable).toList(),
     );
   }
@@ -25,6 +34,13 @@ class SmsInboxRepositoryImpl implements SmsInboxRepository {
     return _smsDao.watchMessages(conversationId).map(
       (rows) => rows.map(SmsMappers.fromSmsMessageTable).toList(),
     );
+  }
+
+  @override
+  Future<List<SmsMessage>> searchMessages(String query) async {
+    if (query.trim().isEmpty) return [];
+    final results = await _smsDao.buscarMensajes(query.trim());
+    return results.map(SmsMappers.fromSmsMessageTable).toList();
   }
 
   @override
@@ -55,5 +71,48 @@ class SmsInboxRepositoryImpl implements SmsInboxRepository {
   @override
   Future<void> upsertConversation(Conversation conversation) async {
     await _conversationDao.upsert(SmsMappers.toConversationCompanion(conversation));
+  }
+
+  @override
+  Future<void> archiveConversation(String conversationId, bool archived) async {
+    await _conversationDao.archive(conversationId, archived);
+  }
+
+  @override
+  Future<void> deleteConversation(String conversationId) async {
+    await _smsDao.deleteByConversation(conversationId);
+    await _conversationDao.deleteById(conversationId);
+  }
+
+  @override
+  Future<bool> isNumberBlocked(String phoneNumber) =>
+      _blockedNumberDao.isBlocked(phoneNumber);
+
+  @override
+  Future<void> blockNumber(String phoneNumber) =>
+      _blockedNumberDao.block(phoneNumber);
+
+  @override
+  Future<void> unblockNumber(String phoneNumber) =>
+      _blockedNumberDao.unblock(phoneNumber);
+
+  @override
+  Stream<List<Conversation>> watchBlockedNumbers() {
+    return _blockedNumberDao.watchAll().asyncMap((blocked) async {
+      final allConvs = await _conversationDao.watchConversations().first;
+      return blocked.map((b) {
+        final match = allConvs.where((c) => c.id == b.id).firstOrNull;
+        if (match != null) {
+          return SmsMappers.fromConversationTable(match);
+        }
+        return Conversation(
+          id: b.id,
+          remitente: b.id,
+          telefono: b.id,
+          ultimoMensaje: '',
+          ultimaFecha: DateTime.fromMillisecondsSinceEpoch(b.bloqueadoEn),
+        );
+      }).toList();
+    });
   }
 }

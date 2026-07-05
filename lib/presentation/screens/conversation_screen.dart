@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
+import 'package:localizador_movil_emergencia/data/datasources/local/mms_cache_manager.dart';
 import 'package:localizador_movil_emergencia/domain/entities/sms_message.dart';
 import 'package:localizador_movil_emergencia/presentation/providers/conversation_provider.dart';
 import 'package:localizador_movil_emergencia/app/di/presentation_module.dart';
@@ -17,6 +20,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late ConversationProvider _provider;
+  bool _emojisVisible = false;
 
   @override
   void initState() {
@@ -100,6 +104,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                           : _buildMessagesList(provider),
                 ),
                 _buildInputBar(provider),
+                if (_emojisVisible) _buildEmojiPicker(),
               ],
             ),
           );
@@ -171,13 +176,16 @@ class _ConversationScreenState extends State<ConversationScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(
-              msg.cuerpo,
-              style: TextStyle(
-                fontSize: 15,
-                color: isSent ? Colors.white : Colors.black87,
+            if (msg.tieneMms)
+              _buildMmsImageContent(msg, isSent)
+            else
+              Text(
+                msg.cuerpo,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: isSent ? Colors.white : Colors.black87,
+                ),
               ),
-            ),
             const SizedBox(height: 4),
             Row(
               mainAxisSize: MainAxisSize.min,
@@ -211,6 +219,54 @@ class _ConversationScreenState extends State<ConversationScreen> {
     );
   }
 
+  Widget _buildMmsImageContent(SmsMessage msg, bool isSent) {
+    return FutureBuilder<List<File>>(
+      future: MmsCacheManager.getImages(msg.id ?? 0),
+      builder: (context, snapshot) {
+        final images = snapshot.data ?? [];
+        final hasImages = images.isNotEmpty;
+        final hasText = msg.cuerpo.isNotEmpty;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            if (hasImages)
+              ...images.map((file) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    file,
+                    fit: BoxFit.contain,
+                    width: double.infinity,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, size: 48),
+                  ),
+                ),
+              )),
+            if (hasImages && hasText) const SizedBox(height: 4),
+            if (hasText)
+              Text(
+                msg.cuerpo,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: isSent ? Colors.white : Colors.black87,
+                ),
+              ),
+            if (!hasImages && !hasText)
+              Text(
+                '(MMS)',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontStyle: FontStyle.italic,
+                  color: isSent ? Colors.white70 : Colors.grey[500],
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildInputBar(ConversationProvider provider) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -227,9 +283,14 @@ class _ConversationScreenState extends State<ConversationScreen> {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.attach_file, color: Colors.grey),
+            icon: Icon(
+              _emojisVisible ? Icons.keyboard : Icons.emoji_emotions_outlined,
+              color: Colors.grey,
+            ),
             onPressed: () {
-              // TODO: Adjuntar archivos (Fase 2)
+              setState(() {
+                _emojisVisible = !_emojisVisible;
+              });
             },
           ),
           Expanded(
@@ -265,6 +326,54 @@ class _ConversationScreenState extends State<ConversationScreen> {
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildEmojiPicker() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return SizedBox(
+      height: 300,
+      child: EmojiPicker(
+        onEmojiSelected: (category, emoji) {
+          final text = _textController.text;
+          final selection = _textController.selection;
+          final newText = text.replaceRange(
+            selection.start,
+            selection.end,
+            emoji.emoji,
+          );
+          _textController.value = TextEditingValue(
+            text: newText,
+            selection: TextSelection.collapsed(
+              offset: selection.start + emoji.emoji.length,
+            ),
+          );
+        },
+        onBackspacePressed: () {
+          final text = _textController.text;
+          final selection = _textController.selection;
+          if (selection.start > 0 && selection.start == selection.end) {
+            final newText = text.substring(0, selection.start - 1) +
+                text.substring(selection.end);
+            _textController.value = TextEditingValue(
+              text: newText,
+              selection: TextSelection.collapsed(
+                offset: selection.start - 1,
+              ),
+            );
+          }
+        },
+        config: Config(
+          emojiViewConfig: EmojiViewConfig(
+            columns: 7,
+            emojiSizeMax: 32,
+            backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          ),
+          bottomActionBarConfig: const BottomActionBarConfig(
+            showSearchViewButton: false,
+          ),
+        ),
       ),
     );
   }

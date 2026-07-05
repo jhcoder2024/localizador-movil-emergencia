@@ -31,6 +31,19 @@ class SmsDao extends DatabaseAccessor<AppDatabase> with _$SmsDaoMixin {
         .write(const SmsMessagesTableCompanion(leido: Value(true)));
   }
 
+  Future<List<SmsMessagesTableData>> buscarMensajes(String query) async {
+    final pattern = '%$query%';
+    return (select(smsMessagesTable)
+          ..where((t) => t.cuerpo.like(pattern))
+          ..orderBy([(t) => OrderingTerm(expression: t.fecha, mode: OrderingMode.desc)])
+          ..limit(50))
+        .get();
+  }
+
+  Future<void> deleteByConversation(String conversationId) async {
+    await (delete(smsMessagesTable)..where((t) => t.conversationId.equals(conversationId))).go();
+  }
+
   Future<List<int>> getAllIds() async {
     final rows = await select(smsMessagesTable).get();
     return rows.map((r) => r.id).toList();

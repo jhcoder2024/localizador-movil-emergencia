@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:localizador_movil_emergencia/domain/services/sms_sync_service.dart';
 import 'package:localizador_movil_emergencia/domain/services/sms_event_service.dart';
 import 'package:localizador_movil_emergencia/app/di/presentation_module.dart';
+import 'package:localizador_movil_emergencia/presentation/providers/theme_provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -23,6 +24,13 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(const Duration(seconds: 1));
 
     if (!mounted) return;
+
+    // Cargar preferencia de tema
+    try {
+      await getIt<ThemeProvider>().loadTheme();
+    } catch (e) {
+      debugPrint('[Splash] Error cargando tema: $e');
+    }
 
     // Sincronizar SMS del sistema
     try {

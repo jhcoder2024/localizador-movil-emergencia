@@ -22,16 +22,12 @@ class ConfigProvider extends ChangeNotifier {
 
   Configuracion _configuracion = const Configuracion();
   List<ContactoTelefono> _contactosAgenda = [];
-  bool _cargando = false;
   String? _error;
-  bool _guardado = false;
 
   Configuracion get configuracion => _configuracion;
   List<ContactoEmergencia> get contactosSeleccionados => _configuracion.contactos;
   List<ContactoTelefono> get contactosAgenda => _contactosAgenda;
-  bool get cargando => _cargando;
   String? get error => _error;
-  bool get guardado => _guardado;
   bool get maxContactosAlcanzado => _configuracion.contactos.length >= 10;
   Future<void> init() async {
     if (_configSub != null) return;
@@ -52,7 +48,7 @@ class ConfigProvider extends ChangeNotifier {
     }
   }
 
-  void agregarContacto(ContactoTelefono contacto) {
+  Future<void> agregarContacto(ContactoTelefono contacto) async {
     if (maxContactosAlcanzado) return;
     final nuevo = ContactoEmergencia(
       id: contacto.id,
@@ -62,17 +58,20 @@ class ConfigProvider extends ChangeNotifier {
     final updated = [..._configuracion.contactos, nuevo];
     _configuracion = _configuracion.copyWith(contactos: updated);
     notifyListeners();
+    await _autoGuardar();
   }
 
-  void eliminarContacto(String id) {
+  Future<void> eliminarContacto(String id) async {
     final updated = _configuracion.contactos.where((c) => c.id != id).toList();
     _configuracion = _configuracion.copyWith(contactos: updated);
     notifyListeners();
+    await _autoGuardar();
   }
 
-  void setIntervalo(int minutos) {
+  Future<void> setIntervalo(int minutos) async {
     _configuracion = _configuracion.copyWith(intervaloMinutos: minutos);
     notifyListeners();
+    await _autoGuardar();
   }
 
   void setTelegramToken(String token) {
@@ -80,23 +79,14 @@ class ConfigProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> guardar() async {
-    if (!_configuracion.esValida) {
-      _error = 'Configuración inválida. Verifica el intervalo y los contactos.';
-      notifyListeners();
-      return;
-    }
-    _cargando = true;
-    notifyListeners();
+  Future<void> _autoGuardar() async {
+    if (!_configuracion.esValida) return;
     try {
       await _guardarConfiguracion.call(_configuracion);
-      _guardado = true;
       _error = null;
     } catch (e) {
-      _error = 'Error al guardar: $e';
+      debugPrint('[Config] Error al auto-guardar: $e');
     }
-    _cargando = false;
-    notifyListeners();
   }
 
   @override
