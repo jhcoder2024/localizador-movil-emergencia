@@ -55,7 +55,6 @@ Future<void> initDataModule() async {
   getIt.registerLazySingleton<ContactsDao>(() => ContactsDao(database));
   getIt.registerLazySingleton<SmsDao>(() => SmsDao(database));
   getIt.registerLazySingleton<ConversationDao>(() => ConversationDao(database));
-
   // Repositories
   getIt.registerLazySingleton<ContactoRepository>(
     () => ContactoRepositoryImpl(getIt<ContactsDao>()),
@@ -79,7 +78,6 @@ Future<void> initDataModule() async {
   getIt.registerLazySingleton<SmsInboxRepository>(
     () => SmsInboxRepositoryImpl(getIt<ConversationDao>(), getIt<SmsDao>()),
   );
-
   // SMS Sync & Event services
   getIt.registerLazySingleton<SmsContentProviderDataSource>(
     () => SmsContentProviderDataSource(),

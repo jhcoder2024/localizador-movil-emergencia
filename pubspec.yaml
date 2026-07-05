@@ -69,6 +69,9 @@ dependencies:
   # Audio
   audioplayers: ^6.0.0
 
+  # Emoji picker
+  emoji_picker_flutter: ^4.4.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
