@@ -50,10 +50,19 @@ class ConfigProvider extends ChangeNotifier {
 
   Future<void> agregarContacto(ContactoTelefono contacto) async {
     if (maxContactosAlcanzado) return;
+
+    // Normalizar teléfono a formato internacional
+    String telefonoNormalizado = contacto.telefono.replaceAll(RegExp(r'[^\d+]'), '');
+    if (telefonoNormalizado.startsWith('0')) {
+      telefonoNormalizado = '+58${telefonoNormalizado.substring(1)}';
+    } else if (!telefonoNormalizado.startsWith('+')) {
+      telefonoNormalizado = '+$telefonoNormalizado';
+    }
+
     final nuevo = ContactoEmergencia(
       id: contacto.id,
       nombre: contacto.nombre,
-      telefono: contacto.telefono,
+      telefono: telefonoNormalizado,
     );
     final updated = [..._configuracion.contactos, nuevo];
     _configuracion = _configuracion.copyWith(contactos: updated);
