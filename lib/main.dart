@@ -10,6 +10,7 @@ import 'package:localizador_movil_emergencia/presentation/screens/splash_screen.
 import 'package:localizador_movil_emergencia/presentation/screens/conversation_screen.dart';
 import 'package:localizador_movil_emergencia/core/theme/app_theme.dart';
 import 'package:localizador_movil_emergencia/presentation/services/notification_service.dart';
+import 'package:localizador_movil_emergencia/presentation/providers/theme_provider.dart';
 import 'package:localizador_movil_emergencia/presentation/services/emergency_background_service.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -84,20 +85,26 @@ class LocalizadorEmergenciaApp extends StatelessWidget {
 
     return MultiProvider(
       providers: providers,
-      child: MaterialApp.router(
-        title: 'Localizador Móvil de Emergencia',
-        theme: AppTheme.lightTheme,
-        routerConfig: router,
-        debugShowCheckedModeBanner: false,
-        localizationsDelegates: [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-        ],
-        supportedLocales: [
-          const Locale('es', 'ES'),
-          const Locale('en', 'US'),
-        ],
-        locale: const Locale('es', 'ES'),
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, _) {
+          return MaterialApp.router(
+            title: 'Localizador Móvil de Emergencia',
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeProvider.themeMode,
+            routerConfig: router,
+            debugShowCheckedModeBanner: false,
+            localizationsDelegates: [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+            ],
+            supportedLocales: [
+              const Locale('es', 'ES'),
+              const Locale('en', 'US'),
+            ],
+            locale: const Locale('es', 'ES'),
+          );
+        },
       ),
     );
   }

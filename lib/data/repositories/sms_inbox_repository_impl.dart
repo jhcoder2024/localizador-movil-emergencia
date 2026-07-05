@@ -15,7 +15,14 @@ class SmsInboxRepositoryImpl implements SmsInboxRepository {
 
   @override
   Stream<List<Conversation>> watchConversations() {
-    return _conversationDao.watchConversations().map(
+    return _conversationDao.watchActiveConversations().map(
+      (rows) => rows.map(SmsMappers.fromConversationTable).toList(),
+    );
+  }
+
+  @override
+  Stream<List<Conversation>> watchArchivedConversations() {
+    return _conversationDao.watchArchivedConversations().map(
       (rows) => rows.map(SmsMappers.fromConversationTable).toList(),
     );
   }
@@ -25,6 +32,13 @@ class SmsInboxRepositoryImpl implements SmsInboxRepository {
     return _smsDao.watchMessages(conversationId).map(
       (rows) => rows.map(SmsMappers.fromSmsMessageTable).toList(),
     );
+  }
+
+  @override
+  Future<List<SmsMessage>> searchMessages(String query) async {
+    if (query.trim().isEmpty) return [];
+    final results = await _smsDao.buscarMensajes(query.trim());
+    return results.map(SmsMappers.fromSmsMessageTable).toList();
   }
 
   @override
@@ -55,5 +69,16 @@ class SmsInboxRepositoryImpl implements SmsInboxRepository {
   @override
   Future<void> upsertConversation(Conversation conversation) async {
     await _conversationDao.upsert(SmsMappers.toConversationCompanion(conversation));
+  }
+
+  @override
+  Future<void> archiveConversation(String conversationId, bool archived) async {
+    await _conversationDao.archive(conversationId, archived);
+  }
+
+  @override
+  Future<void> deleteConversation(String conversationId) async {
+    await _smsDao.deleteByConversation(conversationId);
+    await _conversationDao.deleteById(conversationId);
   }
 }

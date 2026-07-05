@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:localizador_movil_emergencia/presentation/providers/main_provider.dart';
 import 'package:localizador_movil_emergencia/presentation/providers/config_provider.dart';
 import 'package:localizador_movil_emergencia/presentation/providers/inbox_provider.dart';
+import 'package:localizador_movil_emergencia/presentation/providers/search_provider.dart';
+import 'package:localizador_movil_emergencia/presentation/providers/theme_provider.dart';
 
 final getIt = GetIt.instance;
 
@@ -28,6 +30,12 @@ void initPresentationModule() {
       smsInboxRepository: getIt(),
     ),
   );
+  getIt.registerFactory<SearchProvider>(
+    () => SearchProvider(
+      smsInboxRepository: getIt(),
+    ),
+  );
+  getIt.registerLazySingleton<ThemeProvider>(() => ThemeProvider());
 }
 
 List<ChangeNotifierProvider> get providers => [
@@ -39,5 +47,11 @@ List<ChangeNotifierProvider> get providers => [
       ),
       ChangeNotifierProvider<InboxProvider>(
         create: (_) => getIt<InboxProvider>(),
+      ),
+      ChangeNotifierProvider<SearchProvider>(
+        create: (_) => getIt<SearchProvider>(),
+      ),
+      ChangeNotifierProvider<ThemeProvider>(
+        create: (_) => getIt<ThemeProvider>(),
       ),
     ];
