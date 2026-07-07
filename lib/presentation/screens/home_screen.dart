@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:localizador_movil_emergencia/app/di/presentation_module.dart';
+import 'package:localizador_movil_emergencia/presentation/providers/main_provider.dart';
 import 'package:localizador_movil_emergencia/presentation/screens/main_screen.dart';
 import 'package:localizador_movil_emergencia/presentation/screens/inbox_screen.dart';
+import 'package:localizador_movil_emergencia/domain/entities/tipo_emergencia.dart';
 
 class HomeScreen extends StatefulWidget {
   final String? initialTab;
@@ -10,7 +14,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _currentIndex = 0;
 
   final List<Widget> _screens = const [
@@ -21,8 +25,37 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     if (widget.initialTab == 'inbox') {
       _currentIndex = 1;
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkWidgetActivation();
+    }
+  }
+
+  Future<void> _checkWidgetActivation() async {
+    try {
+      const widgetChannel = MethodChannel('com.example.localizador_movil_emergencia/widget');
+      final shouldActivate = await widgetChannel.invokeMethod<bool>('shouldActivateEmergency') ?? false;
+      if (shouldActivate) {
+        final provider = getIt<MainProvider>();
+        if (!provider.estado.activa) {
+          provider.solicitarConfirmacion(TipoEmergencia.extraviado);
+        }
+      }
+    } catch (e) {
+      debugPrint('[Home] Error: $e');
     }
   }
 

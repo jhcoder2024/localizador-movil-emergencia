@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:localizador_movil_emergencia/domain/entities/tipo_emergencia.dart';
 import 'package:localizador_movil_emergencia/presentation/providers/main_provider.dart';
-import 'package:localizador_movil_emergencia/presentation/widgets/emergency_button.dart';
 import 'package:localizador_movil_emergencia/presentation/widgets/emergency_active_banner.dart';
 import 'package:localizador_movil_emergencia/core/utils/permission_utils.dart';
 import 'package:localizador_movil_emergencia/presentation/widgets/confirmation_dialog.dart';
@@ -40,125 +39,103 @@ class _MainScreenState extends State<MainScreen> {
           ),
           body: Stack(
             children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (provider.estado.activa)
-                    EmergencyActiveBanner(
-                      estado: provider.estado,
-                      onCancel: () => provider.cancelarEmergenciaActual(),
-                    ),
-                  if (provider.estado.activa)
-                    Container(
-                      width: double.infinity,
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF3E0),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFFF9800), width: 2),
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (provider.estado.activa)
+                      EmergencyActiveBanner(
+                        estado: provider.estado,
+                        onCancel: () => provider.cancelarEmergenciaActual(),
                       ),
-                      child: Column(
-                        children: [
-                          const Icon(Icons.sms, size: 32, color: Color(0xFFE65100)),
-                          const SizedBox(height: 8),
-                          const Text(
-                            '📱 ENVIANDO UBICACIÓN POR SMS',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: Color(0xFFE65100),
+                    if (provider.ubicacionDenegada)
+                      _buildWarningBanner(
+                        icon: Icons.location_off,
+                        title: 'Permiso de ubicación denegado',
+                        message:
+                            'La aplicación no funcionará correctamente sin acceso a la ubicación. '
+                            'Toca el botón para conceder el permiso.',
+                        action: TextButton(
+                          onPressed: () async {
+                            final otorgado = await PermissionUtils.requestLocationPermission();
+                            if (otorgado) {
+                              await provider.reverificarPermisos();
+                            } else {
+                              await PermissionUtils.openSettings();
+                              await provider.reverificarPermisos();
+                            }
+                          },
+                          child: const Text('CONCEDER PERMISO'),
+                        ),
+                      ),
+                    if (provider.contactosFaltantes)
+                      _buildWarningBanner(
+                        icon: Icons.contacts_outlined,
+                        title: 'Sin contactos configurados',
+                        message:
+                            'No has agregado ningún contacto de emergencia. '
+                            'Ve a Configuración y agrega al menos un contacto para que la app pueda enviar tu ubicación en caso de emergencia.',
+                        action: TextButton(
+                          onPressed: () => context.push('/config'),
+                          child: const Text('Configurar contactos'),
+                        ),
+                      ),
+                    const Spacer(),
+                    SizedBox(
+                      width: 200,
+                      height: 200,
+                      child: ElevatedButton(
+                        onPressed: provider.estado.activa
+                            ? null
+                            : () => provider.solicitarConfirmacion(
+                                TipoEmergencia.extraviado),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFD32F2F),
+                          foregroundColor: Colors.white,
+                          shape: const CircleBorder(),
+                          elevation: 8,
+                        ),
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.warning_amber_rounded, size: 48),
+                            SizedBox(height: 8),
+                            Text(
+                              'EMERGENCIA',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Se abrirá la app de SMS con el mensaje listo.\n'
-                            'Toca "Enviar" para notificar a tus contactos.',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.orange[900],
+                            Text(
+                              'Toca para activar',
+                              style: TextStyle(fontSize: 12),
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-
-                        ],
-                      ),
-                    ),
-                  if (provider.ubicacionDenegada)
-                    _buildWarningBanner(
-                      icon: Icons.location_off,
-                      title: 'Permiso de ubicación denegado',
-                      message:
-                          'La aplicación no funcionará correctamente sin acceso a la ubicación. '
-                          'Toca el botón para conceder el permiso.',
-                      action: TextButton(
-                        onPressed: () async {
-                          final otorgado = await PermissionUtils.requestLocationPermission();
-                          if (otorgado) {
-                            await provider.reverificarPermisos();
-                          } else {
-                            await PermissionUtils.openSettings();
-                            await provider.reverificarPermisos();
-                          }
-                        },
-                        child: const Text('CONCEDER PERMISO'),
-                      ),
-                    ),
-                  if (provider.contactosFaltantes)
-                    _buildWarningBanner(
-                      icon: Icons.contacts_outlined,
-                      title: 'Sin contactos configurados',
-                      message:
-                          'No has agregado ningún contacto de emergencia. '
-                          'Ve a Configuración y agrega al menos un contacto para que la app pueda enviar tu ubicación en caso de emergencia.',
-                      action: TextButton(
-                        onPressed: () => context.push('/config'),
-                        child: const Text('Configurar contactos'),
-                      ),
-                    ),
-                  if (provider.ubicacionDenegada || provider.contactosFaltantes)
-                    const SizedBox(height: 16),
-                  EmergencyButton(
-                    tipo: TipoEmergencia.extraviado,
-                    onPressed: () =>
-                        provider.solicitarConfirmacion(TipoEmergencia.extraviado),
-                    enabled: !provider.estado.activa,
-                  ),
-                  const SizedBox(height: 16),
-                  EmergencyButton(
-                    tipo: TipoEmergencia.atrapado,
-                    onPressed: () =>
-                        provider.solicitarConfirmacion(TipoEmergencia.atrapado),
-                    enabled: !provider.estado.activa,
-                  ),
-                  const SizedBox(height: 16),
-                  EmergencyButton(
-                    tipo: TipoEmergencia.herido,
-                    onPressed: () =>
-                        provider.solicitarConfirmacion(TipoEmergencia.herido),
-                    enabled: !provider.estado.activa,
-                  ),
-                  const SizedBox(height: 24),
-                  if (provider.cargando)
-                    const CircularProgressIndicator(),
-                  if (provider.error != null)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 32),
-                      child: Card(
-                        color: const Color(0xFFFFEBEE),
-                        child: ListTile(
-                          leading: const Icon(Icons.error,
-                              color: Color(0xFFB00020)),
-                          title: Text(provider.error!),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: provider.limpiarError,
-                          ),
+                          ],
                         ),
                       ),
                     ),
-                ],
+                    const Spacer(),
+                    if (provider.cargando)
+                      const CircularProgressIndicator(),
+                    if (provider.error != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Card(
+                          color: const Color(0xFFFFEBEE),
+                          child: ListTile(
+                            leading: const Icon(Icons.error,
+                                color: Color(0xFFB00020)),
+                            title: Text(provider.error!),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: provider.limpiarError,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
               if (provider.mostrarDialogo && provider.tipoPendiente != null)
                 ConfirmationDialog(
