@@ -4,6 +4,7 @@ import 'package:localizador_movil_emergencia/domain/services/sms_sync_service.da
 import 'package:localizador_movil_emergencia/domain/services/sms_event_service.dart';
 import 'package:localizador_movil_emergencia/app/di/presentation_module.dart';
 import 'package:localizador_movil_emergencia/presentation/providers/theme_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -20,9 +21,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _inicializar() async {
-    // Esperar un momento para mostrar el splash
     await Future.delayed(const Duration(seconds: 1));
-
     if (!mounted) return;
 
     // Cargar preferencia de tema
@@ -32,10 +31,19 @@ class _SplashScreenState extends State<SplashScreen> {
       debugPrint('[Splash] Error cargando tema: $e');
     }
 
+    // Solicitar permiso READ_SMS
+    try {
+      final status = await Permission.sms.request();
+      debugPrint('[Splash] Permiso SMS: $status');
+    } catch (e) {
+      debugPrint('[Splash] Error permiso: $e');
+    }
+
     // Sincronizar SMS del sistema
     try {
       final smsSyncService = getIt<SmsSyncService>();
-      await smsSyncService.syncAll();
+      final count = await smsSyncService.syncAll();
+      debugPrint('[Splash] SMS sincronizados: $count');
     } catch (e) {
       debugPrint('[Splash] Error en sync SMS: $e');
     }

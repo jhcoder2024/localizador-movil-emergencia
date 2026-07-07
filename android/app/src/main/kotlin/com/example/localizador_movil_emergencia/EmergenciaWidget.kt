@@ -12,13 +12,12 @@ class EmergenciaWidget : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.widget_emergencia)
             val intent = Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                putExtra("open_emergency", true)
             }
             val pendingIntent = android.app.PendingIntent.getActivity(
                 context, 1, intent,
                 android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT
             )
-            views.setOnClickPendingIntent(R.id.emergency_button, pendingIntent)
+            views.setOnClickPendingIntent(R.id.emergency_icon, pendingIntent)
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }

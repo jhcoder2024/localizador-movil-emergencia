@@ -22,25 +22,11 @@ class _EmergencyButtonState extends State<EmergencyButton> {
   bool _isPressed = false;
 
   Color _getColor() {
-    switch (widget.tipo) {
-      case TipoEmergencia.extraviado:
-        return const Color(0xFFFFC107);
-      case TipoEmergencia.atrapado:
-        return const Color(0xFFFF9800);
-      case TipoEmergencia.herido:
-        return const Color(0xFFF44336);
-    }
+    return const Color(0xFFD32F2F);
   }
 
   IconData _getIcon() {
-    switch (widget.tipo) {
-      case TipoEmergencia.extraviado:
-        return Icons.explore;
-      case TipoEmergencia.atrapado:
-        return Icons.lock;
-      case TipoEmergencia.herido:
-        return Icons.medical_services;
-    }
+    return Icons.warning_amber_rounded;
   }
 
   void _handlePress() {

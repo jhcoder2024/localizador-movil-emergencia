@@ -39,7 +39,7 @@
 
     <application
         android:label="Localizador de Emergencia"
-        android:name="${applicationName}"
+        android:name=".EmergencyApplication"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
@@ -57,6 +57,12 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="localizador" android:host="emergencia" />
             </intent-filter>
         </activity>
 
